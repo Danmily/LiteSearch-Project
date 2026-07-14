@@ -1,0 +1,14 @@
+[
+  {
+    "query": "什么是 RAG",
+    "expected_doc_ids": ["rag.md"]
+  },
+  {
+    "query": "Agent 的 ReAct 循环是怎么工作的",
+    "expected_doc_ids": ["agent.md"]
+  },
+  {
+    "query": "向量检索和关键词检索有什么区别",
+    "expected_doc_ids": ["rag.md"]
+  }
+]

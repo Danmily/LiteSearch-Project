@@ -1,0 +1,15 @@
+[project]
+name = "search-engine-backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "faiss-cpu>=1.14.3",
+    "fastapi>=0.139.0",
+    "mlx-lm>=0.31.3",
+    "numpy>=2.4.6",
+    "pypdf>=6.14.2",
+    "sentence-transformers>=5.6.0",
+    "uvicorn[standard]>=0.51.0",
+]
