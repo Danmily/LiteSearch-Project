@@ -12,6 +12,7 @@ dist/
 # Data / models (personal docs, embeddings, indices — never commit)
 backend/data/*
 !backend/data/sample_corpus/
+!backend/data/flowers/
 backend/app/observability/traces/
 backend/eval/badcases/
 *.faiss

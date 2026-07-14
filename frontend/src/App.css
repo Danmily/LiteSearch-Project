@@ -1,42 +1,106 @@
-.page {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 3rem 1.5rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+:root {
+  --cream: #fbf7f1;
+  --card: #ffffff;
+  --ink: #4a3f3a;
+  --ink-soft: #8a7b73;
+  --rose: #b95c7c;
+  --rose-deep: #9c4463;
+  --rose-soft: #f5e3e9;
+  --leaf: #7d8e6e;
+  --line: #eaddd3;
 }
 
-h1 {
-  font-size: 1.75rem;
-  margin-bottom: 0.25rem;
+body {
+  background: var(--cream);
+}
+
+.page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif;
+  color: var(--ink);
+}
+
+.masthead {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.masthead h1 {
+  font-family: 'Songti SC', 'STSong', Georgia, serif;
+  font-size: 2.2rem;
+  font-weight: 600;
+  letter-spacing: 0.35em;
+  text-indent: 0.35em;
+  color: var(--rose-deep);
+  margin: 0 0 0.4rem;
 }
 
 .subtitle {
-  color: #888;
-  margin-bottom: 2rem;
+  color: var(--ink-soft);
+  margin: 0;
+  font-size: 0.98rem;
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.tab {
+  padding: 0.45rem 1.4rem;
+  font-size: 0.95rem;
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tab.active {
+  background: var(--rose);
+  border-color: var(--rose);
+  color: #fff;
 }
 
 .search-bar {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: 0.6rem;
+  margin-bottom: 1.2rem;
 }
 
 .search-bar input {
   flex: 1;
-  padding: 0.6rem 0.9rem;
+  padding: 0.75rem 1.1rem;
   font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--ink);
+}
+
+.search-bar input:focus {
+  outline: 2px solid var(--rose-soft);
+  border-color: var(--rose);
 }
 
 .search-bar button {
-  padding: 0.6rem 1.2rem;
+  padding: 0.75rem 1.5rem;
   font-size: 1rem;
   border: none;
-  border-radius: 8px;
-  background: #2563eb;
-  color: white;
+  border-radius: 12px;
+  background: var(--rose);
+  color: #fff;
   cursor: pointer;
+  white-space: nowrap;
+}
+
+.search-bar button:hover:not(:disabled) {
+  background: var(--rose-deep);
 }
 
 .search-bar button:disabled {
@@ -44,45 +108,101 @@ h1 {
   cursor: default;
 }
 
+.hint {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
 .error {
-  color: #dc2626;
+  color: #b3423c;
+  text-align: center;
+}
+
+.recommendation {
+  background: var(--rose-soft);
+  border-radius: 16px;
+  padding: 1.4rem 1.6rem;
+  margin: 1.6rem 0;
+}
+
+.recommendation h2 {
+  font-family: 'Songti SC', 'STSong', Georgia, serif;
+  font-size: 1.1rem;
+  color: var(--rose-deep);
+  margin: 0 0 0.6rem;
+}
+
+.recommendation p {
+  margin: 0;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.section-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  letter-spacing: 0.1em;
+  margin: 2rem 0 0.9rem;
+  text-transform: uppercase;
 }
 
 .result-count {
-  color: #888;
+  color: var(--ink-soft);
   font-size: 0.9rem;
-  margin-bottom: 1rem;
+  margin: 1.4rem 0 0.9rem;
 }
 
-.results {
+.flower-grid {
   list-style: none;
   padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 0.9rem;
+}
+
+.flower-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1.1rem 1.2rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.4rem;
 }
 
-.result-card {
-  border: 1px solid #e5e5e5;
-  border-radius: 10px;
-  padding: 1rem 1.25rem;
-  text-align: left;
-}
-
-.result-header {
+.flower-card-head {
   display: flex;
   justify-content: space-between;
-  font-size: 0.85rem;
-  color: #666;
-  margin-bottom: 0.5rem;
+  align-items: baseline;
 }
 
-.score {
+.flower-name {
+  font-family: 'Songti SC', 'STSong', Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--rose-deep);
+}
+
+.flower-score {
+  font-size: 0.75rem;
+  color: var(--leaf);
   font-variant-numeric: tabular-nums;
 }
 
-.result-text {
-  white-space: pre-wrap;
-  line-height: 1.5;
+.flower-huayu {
   margin: 0;
+  color: var(--rose);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.flower-body {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
 }
