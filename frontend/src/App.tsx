@@ -12,41 +12,65 @@ interface SearchResult {
 
 interface FlowerCard {
   name: string
+  latin: string
+  family: string
   huayu: string
+  scenes: string
+  colors: string
+  season: string
   body: string
   score?: number
+  isKnowledge: boolean
 }
 
-function parseFlower(text: string, score?: number): FlowerCard {
+function pick(text: string, label: string): string {
+  const m = text.match(new RegExp(`\\*\\*${label}\\*\\*[:：]\\s*(.+)`))
+  return m?.[1]?.replace(/\*/g, '').trim() ?? ''
+}
+
+function parseCard(r: SearchResult): FlowerCard {
+  const text = r.text
   const nameMatch = text.match(/^#\s*(.+)/m)
-  const huayuMatch = text.match(/\*\*花语\*\*[:：]\s*(.+)/)
+  const fallback = r.source_path.split('/').pop()?.replace('.md', '') ?? '未命名'
   const body = text
     .replace(/^#\s*.+$/m, '')
-    .replace(/^\*\*花语\*\*[:：].+$/m, '')
-    .replace(/\*\*(.+?)\*\*[:：]?/g, '$1:')
+    .replace(/^\*\*(学名|科属|花语|适合场景|颜色|花期)\*\*[:：].*$/gm, '')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
   return {
-    name: nameMatch?.[1]?.trim() ?? '未知花材',
-    huayu: huayuMatch?.[1]?.trim() ?? '',
+    name: nameMatch?.[1]?.trim() ?? fallback,
+    latin: pick(text, '学名'),
+    family: pick(text, '科属'),
+    huayu: pick(text, '花语'),
+    scenes: pick(text, '适合场景'),
+    colors: pick(text, '颜色'),
+    season: pick(text, '花期'),
     body,
-    score,
+    score: r.score,
+    isKnowledge: r.source_path.includes('/knowledge/'),
   }
 }
 
 function FlowerGrid({ cards }: { cards: FlowerCard[] }) {
   return (
-    <ul className="flower-grid">
-      {cards.map((f) => (
-        <li key={f.name} className="flower-card">
-          <div className="flower-card-head">
-            <span className="flower-name">{f.name}</span>
-            {f.score !== undefined && (
-              <span className="flower-score">匹配 {(f.score * 100).toFixed(0)}%</span>
-            )}
-          </div>
-          {f.huayu && <p className="flower-huayu">「{f.huayu}」</p>}
-          <p className="flower-body">{f.body}</p>
+    <ul className="grid">
+      {cards.map((f, i) => (
+        <li key={f.name} className={f.isKnowledge ? 'card knowledge' : 'card'}>
+          <div className="card-index">{f.isKnowledge ? '花艺手册' : `No.${String(i + 1).padStart(2, '0')}`}</div>
+          <h3 className="card-name">{f.name}</h3>
+          {f.latin && <p className="card-latin">{f.latin}{f.family ? ` · ${f.family}` : ''}</p>}
+          {f.huayu && <p className="card-huayu">{f.huayu}</p>}
+          {(f.colors || f.season) && (
+            <p className="card-meta">
+              {f.colors && <span>色 {f.colors}</span>}
+              {f.season && <span>期 {f.season}</span>}
+            </p>
+          )}
+          {f.scenes && <p className="card-meta"><span>宜 {f.scenes}</span></p>}
+          <p className="card-body">{f.body}</p>
+          {f.score !== undefined && (
+            <div className="card-score">匹配 {(f.score * 100).toFixed(0)}%</div>
+          )}
         </li>
       ))}
     </ul>
@@ -79,13 +103,9 @@ function App() {
       const data = await res.json()
       if (tab === 'recommend') {
         setRecommendation(data.recommendation)
-        setCandidates(
-          data.candidates.map((r: SearchResult) => parseFlower(r.text, r.score)),
-        )
+        setCandidates(data.candidates.map(parseCard))
       } else {
-        setSearchResults(
-          data.results.map((r: SearchResult) => parseFlower(r.text, r.score)),
-        )
+        setSearchResults(data.results.map(parseCard))
         setSearchedFor(data.query)
       }
     } catch (err) {
@@ -97,14 +117,17 @@ function App() {
 
   const placeholder =
     tab === 'recommend'
-      ? '说说你的需求,比如:朋友考研失败了,想送束花鼓励她…'
-      : '搜索花卉,比如:适合放办公桌的小花'
+      ? '说说场合与心意:朋友乔迁新居,想送一束耐放又大方的花…'
+      : '找一种花:香气好的 / 适合探病 / 花语关于告别…'
 
   return (
     <div className="page">
       <header className="masthead">
+        <div className="masthead-rule" />
         <h1>花语集</h1>
-        <p className="subtitle">告诉我场合与心意,为你选一束合适的花</p>
+        <p className="masthead-latin">FLORILEGIUM</p>
+        <p className="subtitle">二十五种常见花材 · 花语溯源 · 花艺师推荐</p>
+        <div className="masthead-rule" />
       </header>
 
       <nav className="tabs">
@@ -113,14 +136,15 @@ function App() {
           className={tab === 'recommend' ? 'tab active' : 'tab'}
           onClick={() => setTab('recommend')}
         >
-          推荐花束
+          花束推荐
         </button>
+        <span className="tab-divider">/</span>
         <button
           type="button"
           className={tab === 'search' ? 'tab active' : 'tab'}
           onClick={() => setTab('search')}
         >
-          搜索花卉
+          图鉴检索
         </button>
       </nav>
 
@@ -132,22 +156,22 @@ function App() {
           placeholder={placeholder}
         />
         <button type="submit" disabled={loading}>
-          {loading ? (tab === 'recommend' ? '挑选中…' : '搜索中…') : tab === 'recommend' ? '为我推荐' : '搜索'}
+          {loading ? '…' : tab === 'recommend' ? '为我配一束' : '检索'}
         </button>
       </form>
 
       {loading && tab === 'recommend' && (
-        <p className="hint">花艺师正在从花房里为你挑选,本地模型生成约需几秒…</p>
+        <p className="hint">花艺师正在配花,本地模型生成约需几秒</p>
       )}
       {error && <p className="error">出错了: {error}</p>}
 
       {tab === 'recommend' && !loading && recommendation && (
         <>
-          <section className="recommendation">
-            <h2>花艺师的推荐</h2>
-            <p>{recommendation}</p>
+          <section className="note">
+            <div className="note-label">花艺师手记</div>
+            <p className="note-text">{recommendation}</p>
           </section>
-          <h3 className="section-label">依据这些候选花材</h3>
+          <h2 className="section-label">本次配花参考的花材</h2>
           <FlowerGrid cards={candidates} />
         </>
       )}
@@ -155,11 +179,16 @@ function App() {
       {tab === 'search' && searchedFor !== null && !error && (
         <>
           <p className="result-count">
-            “{searchedFor}” 共 {searchResults.length} 条结果
+            “{searchedFor}” · {searchResults.length} 条
           </p>
           <FlowerGrid cards={searchResults} />
         </>
       )}
+
+      <footer className="colophon">
+        花语参考维多利亚花语传统(Latour 1819 / Tyas 1840s,公有领域)与中文常见习俗整理 ·
+        花艺原则参考 AIFD 十项评估与 60-30-10 法则 · 内容为演示语料
+      </footer>
     </div>
   )
 }

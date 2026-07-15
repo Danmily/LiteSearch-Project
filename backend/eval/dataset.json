@@ -1,14 +1,14 @@
 [
-  {
-    "query": "什么是 RAG",
-    "expected_doc_ids": ["rag.md"]
-  },
-  {
-    "query": "Agent 的 ReAct 循环是怎么工作的",
-    "expected_doc_ids": ["agent.md"]
-  },
-  {
-    "query": "向量检索和关键词检索有什么区别",
-    "expected_doc_ids": ["rag.md"]
-  }
+  { "query": "母亲节送什么花", "expected_doc_ids": ["carnation.md"] },
+  { "query": "适合放办公桌的元气小花", "expected_doc_ids": ["daisy.md", "chamomile.md"] },
+  { "query": "朋友失恋了想安慰她", "expected_doc_ids": ["chamomile.md", "lavender.md"] },
+  { "query": "求婚用什么花", "expected_doc_ids": ["red-rose.md"] },
+  { "query": "睡眠不好送什么花", "expected_doc_ids": ["lavender.md"] },
+  { "query": "毕业送别的花", "expected_doc_ids": ["forget-me-not.md", "gardenia.md", "sunflower.md"] },
+  { "query": "花店的桔梗和真正的桔梗是一种吗", "expected_doc_ids": ["eustoma.md", "platycodon.md"] },
+  { "query": "花束怎么配色", "expected_doc_ids": ["color-603010.md"] },
+  { "query": "切花怎么养放得久", "expected_doc_ids": ["care-basics.md"] },
+  { "query": "长辈过寿送什么花", "expected_doc_ids": ["peony-mudan.md", "carnation.md"] },
+  { "query": "冬天像芍药的花", "expected_doc_ids": ["ranunculus.md"] },
+  { "query": "日本花道有哪些流派", "expected_doc_ids": ["ikebana-schools.md"] }
 ]

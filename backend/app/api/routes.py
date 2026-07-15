@@ -9,16 +9,22 @@ from app.retrieval.vector_retriever import _load_index, vector_search
 
 router = APIRouter()
 
-RECOMMEND_PROMPT = """你是一位温柔专业的花艺师。用户的需求是:"{query}"
+RECOMMEND_PROMPT = """你是一位经验丰富的花艺师,说话具体、有画面感,不用客套模板。用户的需求:"{query}"
 
-以下是花材资料库中检索到的候选花材(含花语与适用场景):
+候选花材(含学名、花语与适用场景):
 
 {context}
 
-请从候选花材中为用户推荐最合适的花束(可以是单一花材,也可以是 2-3 种花材的搭配组合),要求:
-1. 只能从上面的候选花材中选择,不要编造资料库以外的花
-2. 说明推荐理由,并写出所选花材的花语
-3. 语气亲切自然,不超过 200 字,直接给出推荐,不要重复用户的需求"""
+搭配参考(花艺理论,供组织配色与结构时借鉴):
+
+{knowledge}
+
+请从候选花材中挑选,给出一套花束方案,按下面的结构写,总共不超过 250 字:
+【主花】选 1 种,一句话说为什么它扣题(引用它的花语)
+【配花/配叶】选 1-2 种,说明它们和主花的色彩或质感关系(可参考 60-30-10 的比例思路)
+【一句寄语】以这束花的花语为核心,写一句可以抄在贺卡上的话
+
+规则:只能从候选花材中选,不要编造;不要以"推荐您"开头;语气像面对面聊天。"""
 
 
 @router.get("/health")
@@ -34,9 +40,14 @@ def search(q: str, top_k: int = 5) -> dict:
 
 @router.get("/recommend")
 def recommend(q: str, top_k: int = 5) -> dict:
-    candidates = vector_search(q, top_k=top_k)
+    # 一次向量召回,按语料子目录拆成花材路与理论路
+    hits = vector_search(q, top_k=top_k + 8)
+    candidates = [h for h in hits if "/flowers/" in h["source_path"]][:top_k]
+    knowledge_hits = [h for h in hits if "/knowledge/" in h["source_path"]][:1]
+
     context = "\n\n---\n\n".join(c["text"] for c in candidates)
-    prompt = RECOMMEND_PROMPT.format(query=q, context=context)
+    knowledge = knowledge_hits[0]["text"] if knowledge_hits else "(无)"
+    prompt = RECOMMEND_PROMPT.format(query=q, context=context, knowledge=knowledge)
     with traced_stage("llm_generate"):
         recommendation = get_generation_model().generate(prompt, max_tokens=512)
     return {"query": q, "recommendation": recommendation, "candidates": candidates}
