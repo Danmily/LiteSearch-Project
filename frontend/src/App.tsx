@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import Studio from './Studio'
 import './App.css'
 
 const API_BASE = 'http://localhost:8000'
@@ -78,7 +79,7 @@ function FlowerGrid({ cards }: { cards: FlowerCard[] }) {
 }
 
 function App() {
-  const [tab, setTab] = useState<'recommend' | 'search'>('recommend')
+  const [tab, setTab] = useState<'studio' | 'recommend' | 'search'>('studio')
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -124,13 +125,39 @@ function App() {
     <div className="page">
       <header className="masthead">
         <div className="masthead-rule" />
-        <h1>花语集</h1>
+        <h1>
+          <svg viewBox="-34 -38 68 72" width="40" height="42" className="masthead-doodle" aria-hidden="true">
+            <g transform="rotate(-8)">
+              {Array.from({ length: 11 }, (_, k) => (
+                <ellipse key={k} cx="0" cy="-16" rx="4.5" ry="11" fill="#f3c6d3"
+                  stroke="#4a4238" strokeWidth="2" transform={`rotate(${k * 32.7})`} />
+              ))}
+              <circle r="8" fill="#f2c14e" stroke="#4a4238" strokeWidth="2" />
+            </g>
+          </svg>
+          花语集
+          <svg viewBox="-34 -38 68 72" width="40" height="42" className="masthead-doodle" aria-hidden="true">
+            <g transform="rotate(10)">
+              <path d="M-18,-4 C-21,-24 -9,-30 0,-17 C9,-30 21,-24 18,-4 C16,12 -16,12 -18,-4 Z"
+                fill="#e0719b" stroke="#4a4238" strokeWidth="2" />
+              <path d="M-7,-15 C-6,-27 6,-27 7,-15" fill="none" stroke="#4a4238" strokeWidth="2" />
+            </g>
+          </svg>
+        </h1>
         <p className="masthead-latin">FLORILEGIUM</p>
-        <p className="subtitle">二十五种常见花材 · 花语溯源 · 花艺师推荐</p>
+        <p className="subtitle">插一瓶自己的花 · 花语溯源 · 花艺师推荐</p>
         <div className="masthead-rule" />
       </header>
 
       <nav className="tabs">
+        <button
+          type="button"
+          className={tab === 'studio' ? 'tab active' : 'tab'}
+          onClick={() => setTab('studio')}
+        >
+          插花工坊
+        </button>
+        <span className="tab-divider">/</span>
         <button
           type="button"
           className={tab === 'recommend' ? 'tab active' : 'tab'}
@@ -148,6 +175,9 @@ function App() {
         </button>
       </nav>
 
+      {tab === 'studio' && <Studio />}
+
+      {tab !== 'studio' && (
       <form className="search-bar" onSubmit={submit}>
         <input
           type="text"
@@ -159,6 +189,7 @@ function App() {
           {loading ? '…' : tab === 'recommend' ? '为我配一束' : '检索'}
         </button>
       </form>
+      )}
 
       {loading && tab === 'recommend' && (
         <p className="hint">花艺师正在配花,本地模型生成约需几秒</p>

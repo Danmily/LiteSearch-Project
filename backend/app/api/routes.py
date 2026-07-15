@@ -53,6 +53,35 @@ def recommend(q: str, top_k: int = 5) -> dict:
     return {"query": q, "recommendation": recommendation, "candidates": candidates}
 
 
+CRITIQUE_PROMPT = """你是一位眼光敏锐但语气温柔的花艺老师。学生刚在瓶里插好一束花,用料:{arrangement}
+
+相关花材资料(含花语):
+
+{context}
+
+花艺理论参考:
+
+{knowledge}
+
+请写一段点评,不超过 160 字:先说这瓶花给你的整体感觉(自然地引用其中一两种花的花语),再从色彩比例或形态结构的角度给一个具体的小建议(可参考 60-30-10 或主花/配花思路),最后一句轻轻鼓励。像课后闲聊,不要打分,不要分条列点。"""
+
+
+@router.get("/critique")
+def critique(q: str) -> dict:
+    hits = vector_search(q.replace("x", " "), top_k=12)
+    flower_hits = [h for h in hits if "/flowers/" in h["source_path"]][:4]
+    knowledge_hits = [h for h in hits if "/knowledge/" in h["source_path"]]
+    if not knowledge_hits:
+        knowledge_hits = [h for h in vector_search("花束配色 比例 主花", top_k=6)
+                          if "/knowledge/" in h["source_path"]]
+    context = "\n\n---\n\n".join(c["text"] for c in flower_hits)
+    knowledge = knowledge_hits[0]["text"] if knowledge_hits else "(无)"
+    prompt = CRITIQUE_PROMPT.format(arrangement=q, context=context, knowledge=knowledge)
+    with traced_stage("llm_generate"):
+        comment = get_generation_model().generate(prompt, max_tokens=400)
+    return {"arrangement": q, "critique": comment}
+
+
 @router.post("/ingest")
 def ingest(corpus_dir: str) -> dict:
     store = build_index(Path(corpus_dir), index_path=DEFAULT_INDEX_PATH)

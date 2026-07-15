@@ -4,6 +4,8 @@
 
 当前演示垂类是「花语集」:25 种花材语料(学名/科属/花语溯源/场景/搭配)+ 4 篇花艺理论(AIFD 十项/60-30-10 配色/花道流派/切花养护),支持语义搜索和 RAG 花束推荐(`/recommend`:双路召回花材与理论 → 本地 LLM 按"主花/配花/寄语"结构化输出)。引擎本身不绑定领域——换一份语料重新 `/ingest` 即是另一个垂类产品。数据源合规规划见 [docs/data-sources.md](docs/data-sources.md)。
 
+前端是手绘风的「插花工坊」:从花架摘花入瓶、拖动花头弯枝、点选换色换釉,插好后可以"请花艺老师点评"——把瓶中花材喂给 `/critique`(检索花材+理论 → 本地 LLM 生成点评),配蝴蝶、花瓣雨、花语纸条等互动细节;作品自动存 localStorage。
+
 ## 结构
 
 - `backend/` — Python + FastAPI,分层为 `models`(embedding/LLM 统一接口)、`ingestion`(文档处理+索引)、`retrieval`(检索编排)、`agent`(工具调用)、`observability`(请求级 trace)、`api`、`eval`(评测与 badcase)
