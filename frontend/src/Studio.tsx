@@ -5,12 +5,21 @@ const INK = '#4a4238'
 
 type Kind =
   | 'rose'
+  | 'peony'
+  | 'ranunculus'
+  | 'eustoma'
   | 'tulip'
+  | 'carnation'
   | 'sunflower'
   | 'daisy'
+  | 'chamomile'
   | 'hydrangea'
-  | 'gypsophila'
   | 'lily'
+  | 'stock'
+  | 'lavender'
+  | 'lilyvalley'
+  | 'forgetmenot'
+  | 'gypsophila'
   | 'eucalyptus'
 
 interface FlowerDef {
@@ -24,9 +33,25 @@ export const FLOWER_DEFS: Record<Kind, FlowerDef> = {
     label: '玫瑰', huayu: '热烈的爱、温柔的告白',
     palette: ['#e59aae', '#cf5b76', '#f2d3da', '#efe3c4', '#b8405f'],
   },
+  peony: {
+    label: '芍药', huayu: '情有所钟、依依惜别',
+    palette: ['#f2b8c6', '#e58aa3', '#f7e9d8', '#e8707f'],
+  },
+  ranunculus: {
+    label: '花毛茛', huayu: '受欢迎、光彩夺目',
+    palette: ['#f3d9a4', '#e89a5f', '#e77e93', '#f4efe1', '#b8405f'],
+  },
+  eustoma: {
+    label: '洋桔梗', huayu: '不变的爱、真诚的感动',
+    palette: ['#f4eee0', '#cbb3dd', '#e9b9cd', '#f2e3c8'],
+  },
   tulip: {
     label: '郁金香', huayu: '博爱、体贴、优雅',
     palette: ['#e0719b', '#e6b23a', '#b184c9', '#dd6a52', '#f3ecd8'],
+  },
+  carnation: {
+    label: '康乃馨', huayu: '母爱、温馨、感恩',
+    palette: ['#e88ca0', '#cf4a63', '#f6f0e3', '#f0c7d2'],
   },
   sunflower: {
     label: '向日葵', huayu: '阳光、沉默的爱',
@@ -36,17 +61,37 @@ export const FLOWER_DEFS: Record<Kind, FlowerDef> = {
     label: '小雏菊', huayu: '隐藏在心底的爱、天真快乐',
     palette: ['#f7f3ea', '#f3c6d3', '#f4de79'],
   },
+  chamomile: {
+    label: '洋甘菊', huayu: '逆境中的活力',
+    palette: ['#f8f4ea', '#f3e3c0'],
+  },
   hydrangea: {
     label: '绣球', huayu: '希望、圆满、感谢你的理解',
     palette: ['#9db8dd', '#d8a9c4', '#b9cf9e', '#cfc3e6'],
   },
-  gypsophila: {
-    label: '满天星', huayu: '思念、甘愿做配角的爱',
-    palette: ['#f7f4ec', '#f3d9e2', '#dce6f4'],
-  },
   lily: {
     label: '百合', huayu: '纯洁、百年好合',
     palette: ['#f5f0e2', '#f0c8d8', '#f2dc9b'],
+  },
+  stock: {
+    label: '紫罗兰', huayu: '永恒的美、质朴、体贴',
+    palette: ['#b184c9', '#e3a7c0', '#f4efe1', '#efd7a0'],
+  },
+  lavender: {
+    label: '薰衣草', huayu: '等待爱情、宁静、安睡',
+    palette: ['#8f7fc0', '#a99ad0', '#6f5fa8'],
+  },
+  lilyvalley: {
+    label: '铃兰', huayu: '幸福归来、纯洁谦逊',
+    palette: ['#f7f4ec', '#f0ead6'],
+  },
+  forgetmenot: {
+    label: '勿忘我', huayu: '永恒的记忆、真挚的情谊',
+    palette: ['#8fb3e3', '#b6cdf0', '#e9b9cd', '#f5f1e6'],
+  },
+  gypsophila: {
+    label: '满天星', huayu: '思念、甘愿做配角的爱',
+    palette: ['#f7f4ec', '#f3d9e2', '#dce6f4'],
   },
   eucalyptus: {
     label: '尤加利', huayu: '恩赐、守护、回忆',
@@ -149,6 +194,115 @@ export function Bloom({ kind, color }: { kind: Kind; color: string }) {
           ))}
         </g>
       )
+    case 'peony':
+      return (
+        <g>
+          {Array.from({ length: 6 }, (_, k) => (
+            <ellipse key={k} cx="0" cy="-17" rx="11" ry="14" fill={color} {...s}
+              transform={`rotate(${k * 60})`} />
+          ))}
+          <circle r="14" fill={color} {...s} />
+          {[30, 150, 270].map((r) => (
+            <ellipse key={r} cx="0" cy="-6" rx="6" ry="9" fill={color} {...s}
+              strokeWidth="1.6" transform={`rotate(${r})`} />
+          ))}
+          <circle cx="-2" cy="1" r="1.6" fill="#c98a2d" stroke="none" />
+          <circle cx="3" cy="-2" r="1.6" fill="#c98a2d" stroke="none" />
+        </g>
+      )
+    case 'ranunculus':
+      return (
+        <g>
+          <circle r="20" fill={color} {...s} />
+          <circle cx="1.5" cy="-1" r="14" fill="none" {...s} strokeWidth="1.7" />
+          <circle cx="-1" cy="1" r="8.5" fill="none" {...s} strokeWidth="1.6" />
+          <circle cx="0.5" cy="0" r="3.5" fill="#5c6b46" stroke="none" />
+        </g>
+      )
+    case 'eustoma':
+      return (
+        <g>
+          {Array.from({ length: 5 }, (_, k) => (
+            <ellipse key={k} cx="0" cy="-14" rx="9" ry="13" fill={color} {...s}
+              transform={`rotate(${k * 72})`} />
+          ))}
+          <circle r="9" fill={color} {...s} />
+          <path d="M0,-6 C6,-5 6,3 1,4 C-4,5 -6,0 -3,-3" fill="none" {...s} strokeWidth="1.7" />
+        </g>
+      )
+    case 'carnation':
+      return (
+        <g>
+          <path d="M-19,2 C-23,-8 -14,-17 -8,-13 C-8,-22 4,-24 7,-16 C15,-21 23,-11 17,-3 C24,3 17,14 9,12 C7,20 -6,21 -9,13 C-17,17 -23,9 -19,2 Z"
+            fill={color} {...s} />
+          <path d="M-9,-2 C-11,-8 -3,-13 1,-8 C5,-13 12,-7 10,-1 C13,5 6,10 2,7 C-2,11 -9,8 -9,-2 Z"
+            fill="none" {...s} strokeWidth="1.7" />
+        </g>
+      )
+    case 'chamomile':
+      return (
+        <g>
+          {Array.from({ length: 8 }, (_, k) => (
+            <ellipse key={k} cx="0" cy="-13" rx="4" ry="10" fill={color} {...s}
+              strokeWidth="1.7" transform={`rotate(${k * 45})`} />
+          ))}
+          <circle r="7" fill="#e9b83c" {...s} strokeWidth="1.7" />
+        </g>
+      )
+    case 'stock':
+      return (
+        <g>
+          <path d="M0,26 C1,10 -1,-6 0,-24" fill="none" {...s} />
+          {([[0, -20], [-6, -12], [6, -10], [-5, -2], [5, 0], [0, 8]] as [number, number][]).map(([x, y], i) => (
+            <g key={i} transform={`translate(${x} ${y}) rotate(${(i * 23) % 45})`}>
+              {[0, 90, 180, 270].map((r) => (
+                <ellipse key={r} cx="0" cy="-4.5" rx="3" ry="4.5" fill={color} {...s}
+                  strokeWidth="1.4" transform={`rotate(${r})`} />
+              ))}
+              <circle r="1.4" fill={INK} stroke="none" />
+            </g>
+          ))}
+        </g>
+      )
+    case 'lavender':
+      return (
+        <g>
+          <path d="M0,26 C1,12 -1,0 0,-8" fill="none" {...s} />
+          {([[0, -26], [-4.5, -20], [4.5, -19], [-4.5, -13], [4.5, -12], [-4, -6], [4, -5], [0, -1]] as [number, number][]).map(([x, y], i) => (
+            <ellipse key={i} cx={x} cy={y} rx="4" ry="5.5" fill={color} {...s} strokeWidth="1.5" />
+          ))}
+          <path d="M-2,14 C-8,10 -10,4 -9,0 M2,16 C8,13 10,7 9,3" fill="none" {...s} strokeWidth="1.5" />
+        </g>
+      )
+    case 'lilyvalley':
+      return (
+        <g>
+          <path d="M-4,26 C-8,6 2,-14 16,-22" fill="none" {...s} />
+          <ellipse cx="-10" cy="8" rx="7" ry="16" fill="#8ba172" {...s} strokeWidth="1.6"
+            transform="rotate(-14 -10 8)" />
+          {([[0, -4, 9], [7, -13, 9], [15, -20, 8]] as [number, number, number][]).map(([x, y, sc], i) => (
+            <path key={i}
+              d={`M${x},${y} c${-sc * 0.55},0.5 ${-sc * 0.7},${sc * 0.8} ${-sc * 0.45},${sc} l${sc * 0.18},-0.2 l${sc * 0.15},${sc * 0.22} l${sc * 0.15},-${sc * 0.22} l${sc * 0.18},0.2 c${sc * 0.25},-0.2 ${sc * 0.1},-${sc} ${-sc * 0.21},-${sc}`}
+              fill={color} {...s} strokeWidth="1.5" />
+          ))}
+        </g>
+      )
+    case 'forgetmenot':
+      return (
+        <g>
+          {([[-9, -8], [8, -3], [-1, 9]] as [number, number][]).map(([x, y], i) => (
+            <g key={i} transform={`translate(${x} ${y}) rotate(${i * 25})`}>
+              {Array.from({ length: 5 }, (_, k) => (
+                <circle key={k} cx="0" cy="-6" r="4" fill={color} {...s} strokeWidth="1.5"
+                  transform={`rotate(${k * 72})`} />
+              ))}
+              <circle r="2.4" fill="#f2c14e" stroke={INK} strokeWidth="1" />
+            </g>
+          ))}
+          <circle cx="12" cy="-14" r="2.4" fill={color} {...s} strokeWidth="1.3" />
+          <circle cx="-14" cy="6" r="2.4" fill={color} {...s} strokeWidth="1.3" />
+        </g>
+      )
   }
 }
 
@@ -210,7 +364,7 @@ export default function Studio() {
   }
 
   function addFlower(kind: Kind) {
-    if (placed.length >= 12) return
+    if (placed.length >= 15) return
     const ax = 348 + Math.random() * 64
     const x = 250 + Math.random() * 260
     const y = 130 + Math.random() * 130
