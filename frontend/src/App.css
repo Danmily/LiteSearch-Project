@@ -432,6 +432,17 @@ body {
   border-radius: var(--wobble);
   background: var(--card);
   overflow: hidden;
+  transition: background 0.5s ease;
+}
+
+.canvas-wrap.dark { border-color: #5a5346; }
+
+.light-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity 0.5s ease;
 }
 
 .studio-canvas {
@@ -480,6 +491,7 @@ body {
   top: 12%;
   left: -40px;
   pointer-events: none;
+  z-index: 3;
   animation: fly 26s linear infinite;
 }
 
@@ -515,6 +527,7 @@ body {
   inset: 0;
   pointer-events: none;
   overflow: hidden;
+  z-index: 3;
 }
 
 .petal {
@@ -540,6 +553,7 @@ body {
   position: absolute;
   top: 14px;
   right: 14px;
+  z-index: 4;
   max-width: 210px;
   background: #fbf3d9;
   border: 1.5px solid var(--ink-soft);
@@ -581,10 +595,14 @@ body {
   position: absolute;
   bottom: 14px;
   left: 50%;
+  z-index: 4;
   transform: translateX(-50%) rotate(-0.6deg);
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 94%;
+  gap: 0.4rem;
   background: var(--card);
   border: 1.5px solid var(--ink-soft);
   border-radius: 14px 8px 16px 8px;
@@ -606,6 +624,25 @@ body {
 
 .swatch:hover { transform: scale(1.2) rotate(8deg); }
 .swatch.on { outline: 2px solid var(--moss-deep); outline-offset: 1.5px; }
+
+.swatch.spray {
+  border-radius: 4px 7px 4px 7px;
+  border-style: dashed;
+}
+.swatch.spray.on { outline: 2px solid var(--plum); }
+
+.toolbar-div {
+  width: 1px;
+  height: 18px;
+  background: var(--line);
+  margin: 0 0.15rem;
+}
+
+.toolbar-tag {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  margin-right: 0.1rem;
+}
 
 .toolbar-btn {
   font-family: inherit;

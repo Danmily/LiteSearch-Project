@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
 
 const API_BASE = 'http://localhost:8000'
 const INK = '#4a4238'
@@ -141,6 +141,34 @@ function bestPaletteIdx(palette: string[], targets: string[]): { idx: number; di
   return { idx, dist: best }
 }
 const THEME_FIT = 9000 // squared-rgb threshold: below = "fits the theme"
+
+function mixHex(a: string, b: string, t: number): string {
+  const [r1, g1, b1] = hexRgb(a)
+  const [r2, g2, b2] = hexRgb(b)
+  const m = (x: number, y: number) => Math.round(x + (y - x) * t).toString(16).padStart(2, '0')
+  return `#${m(r1, r2)}${m(g1, g2)}${m(b1, b2)}`
+}
+
+/* ---------- spray tints ---------- */
+
+interface Spray { key: string; label: string; color: string }
+const SPRAYS: Spray[] = [
+  { key: 'gold', label: '金粉', color: '#d9b45a' },
+  { key: 'frost', label: '霜白', color: '#eef2f4' },
+  { key: 'mist', label: '雾紫', color: '#b9a7d6' },
+  { key: 'peach', label: '蜜桃', color: '#f2c0a0' },
+  { key: 'mint', label: '薄荷', color: '#a8cbb0' },
+]
+
+/* ---------- lighting moods ---------- */
+
+interface Light { key: string; label: string; bg: string; overlay: string; blend: string; dark?: boolean }
+const LIGHTS: Light[] = [
+  { key: 'studio', label: '柔光棚', bg: '#fdfaf1', overlay: 'none', blend: 'normal' },
+  { key: 'morning', label: '晨光', bg: '#fdf7ea', overlay: 'linear-gradient(115deg, rgba(255,214,140,0.34), rgba(255,255,255,0) 55%)', blend: 'soft-light' },
+  { key: 'golden', label: '黄昏', bg: '#f4e6cf', overlay: 'radial-gradient(120% 95% at 78% 15%, rgba(255,168,86,0.42), rgba(150,86,44,0.14) 72%)', blend: 'soft-light' },
+  { key: 'moon', label: '月夜', bg: '#33302b', overlay: 'radial-gradient(135% 105% at 50% -5%, rgba(150,180,235,0.34), rgba(24,28,42,0.5))', blend: 'soft-light', dark: true },
+]
 
 /* ---------- hand-drawn blooms, centred on (0,0) ---------- */
 
@@ -378,6 +406,7 @@ interface Placed {
   id: number
   kind: Kind
   colorIdx: number
+  spray?: string
   ax: number
   ay: number
   x: number
@@ -390,6 +419,8 @@ interface Note { key: number; label: string; huayu: string; role: string }
 
 const STORAGE_KEY = 'huayuji-arrangement-v2'
 const THEME_KEY = 'huayuji-theme-v1'
+const LIGHT_KEY = 'huayuji-light-v1'
+const CRAYON_KEY = 'huayuji-crayon-v1'
 const VASE_COLORS = ['#c67d54', '#7c93a8', '#5b7d64', '#d9c07a', '#8a6b9e', '#e6e2d6']
 const MAX_STEMS = 18
 
@@ -408,6 +439,8 @@ export default function Studio() {
     return []
   })
   const [themeKey, setThemeKey] = useState<string>(() => localStorage.getItem(THEME_KEY) ?? 'none')
+  const [lightKey, setLightKey] = useState<string>(() => localStorage.getItem(LIGHT_KEY) ?? 'studio')
+  const [crayon, setCrayon] = useState<boolean>(() => localStorage.getItem(CRAYON_KEY) === '1')
   const [vaseIdx, setVaseIdx] = useState(0)
   const [selected, setSelected] = useState<number | null>(null)
   const [note, setNote] = useState<Note | null>(null)
@@ -419,9 +452,12 @@ export default function Studio() {
   const noteTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const theme = THEMES.find((t) => t.key === themeKey) ?? THEMES[0]
+  const light = LIGHTS.find((l) => l.key === lightKey) ?? LIGHTS[0]
 
   useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(placed)) }, [placed])
   useEffect(() => { localStorage.setItem(THEME_KEY, themeKey) }, [themeKey])
+  useEffect(() => { localStorage.setItem(LIGHT_KEY, lightKey) }, [lightKey])
+  useEffect(() => { localStorage.setItem(CRAYON_KEY, crayon ? '1' : '0') }, [crayon])
 
   function showNote(kind: Kind) {
     const def = FLOWER_DEFS[kind]
@@ -491,7 +527,11 @@ export default function Studio() {
   }
 
   function setColor(id: number, idx: number) {
-    setPlaced((p) => p.map((f) => (f.id === id ? { ...f, colorIdx: idx } : f)))
+    setPlaced((p) => p.map((f) => (f.id === id ? { ...f, colorIdx: idx, spray: undefined } : f)))
+  }
+
+  function setSpray(id: number, color: string | undefined) {
+    setPlaced((p) => p.map((f) => (f.id === id ? { ...f, spray: color } : f)))
   }
 
   function remove(id: number) {
@@ -626,6 +666,29 @@ export default function Studio() {
         ))}
       </div>
 
+      {/* lighting + texture */}
+      <div className="theme-bar">
+        <span className="theme-bar-label">打光</span>
+        {LIGHTS.map((l) => (
+          <button
+            key={l.key}
+            type="button"
+            className={l.key === lightKey ? 'theme-chip on' : 'theme-chip'}
+            onClick={() => setLightKey(l.key)}
+          >
+            {l.label}
+          </button>
+        ))}
+        <button
+          type="button"
+          className={crayon ? 'theme-chip on' : 'theme-chip'}
+          onClick={() => setCrayon((c) => !c)}
+          style={{ marginLeft: '0.4rem' }}
+        >
+          ✎ 蜡笔质感
+        </button>
+      </div>
+
       <div className="shelf">
         {KINDS.map((kind) => (
           <button
@@ -645,7 +708,7 @@ export default function Studio() {
 
       <div className="tip-banner">{advice.tip}</div>
 
-      <div className="canvas-wrap">
+      <div className={light.dark ? 'canvas-wrap dark' : 'canvas-wrap'} style={{ background: light.bg }}>
         <svg
           ref={svgRef}
           viewBox="0 0 760 520"
@@ -654,7 +717,13 @@ export default function Studio() {
           onPointerUp={onPointerUp}
           onPointerDown={() => setSelected(null)}
         >
-          <path d="M30,486 C230,480 530,480 730,486" fill="none" stroke={INK} strokeWidth="2" strokeLinecap="round" opacity="0.5" />
+          <defs>
+            <filter id="crayon" x="-8%" y="-8%" width="116%" height="116%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="4" result="n" />
+              <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" xChannelSelector="R" yChannelSelector="G" />
+            </filter>
+          </defs>
+          <path d="M30,486 C230,480 530,480 730,486" fill="none" stroke={light.dark ? '#6b6355' : INK} strokeWidth="2" strokeLinecap="round" opacity="0.5" />
 
           {/* stems */}
           {drawOrder.map((f) => {
@@ -682,6 +751,8 @@ export default function Studio() {
           {/* blooms */}
           {drawOrder.map((f) => {
             const sc = FLOWER_DEFS[f.kind].scale
+            const base = FLOWER_DEFS[f.kind].palette[f.colorIdx]
+            const col = f.spray ? mixHex(base, f.spray, 0.5) : base
             return (
               <g
                 key={f.id}
@@ -695,11 +766,19 @@ export default function Studio() {
                 <g
                   className={selected === f.id ? 'bloom selected' : 'bloom'}
                   transform={`translate(${f.x} ${f.y}) scale(${sc})`}
+                  filter={crayon ? 'url(#crayon)' : undefined}
                   onPointerDown={(e) => onBloomDown(e, f.id)}
                   onDoubleClick={() => remove(f.id)}
                 >
-                  {selected === f.id && <circle r="30" fill="none" stroke={INK} strokeWidth="1.4" strokeDasharray="4 5" opacity="0.6" />}
-                  <Bloom kind={f.kind} color={FLOWER_DEFS[f.kind].palette[f.colorIdx]} />
+                  {selected === f.id && <circle r="30" fill="none" stroke={light.dark ? '#cbb9a0' : INK} strokeWidth="1.4" strokeDasharray="4 5" opacity="0.6" />}
+                  <Bloom kind={f.kind} color={col} />
+                  {f.spray === '#d9b45a' && (
+                    <g>
+                      {[[-8, -10], [6, -14], [12, 2], [-4, 8], [2, -2]].map(([dx, dy], i) => (
+                        <circle key={i} cx={dx} cy={dy} r="1.1" fill="#f4d97a" stroke="none" opacity="0.9" />
+                      ))}
+                    </g>
+                  )}
                 </g>
               </g>
             )
@@ -711,6 +790,14 @@ export default function Studio() {
             </text>
           )}
         </svg>
+
+        {light.overlay !== 'none' && (
+          <div
+            className="light-overlay"
+            aria-hidden="true"
+            style={{ background: light.overlay, mixBlendMode: light.blend as CSSProperties['mixBlendMode'] }}
+          />
+        )}
 
         {placed.length >= 3 && (
           <div className="butterfly" aria-hidden="true">
@@ -759,10 +846,23 @@ export default function Studio() {
               <button
                 key={c}
                 type="button"
-                className={i === selectedFlower.colorIdx ? 'swatch on' : 'swatch'}
+                className={i === selectedFlower.colorIdx && !selectedFlower.spray ? 'swatch on' : 'swatch'}
                 style={{ background: c }}
                 onClick={() => setColor(selectedFlower.id, i)}
                 aria-label={`颜色 ${i + 1}`}
+              />
+            ))}
+            <span className="toolbar-div" />
+            <span className="toolbar-tag">喷漆</span>
+            {SPRAYS.map((sp) => (
+              <button
+                key={sp.key}
+                type="button"
+                className={selectedFlower.spray === sp.color ? 'swatch spray on' : 'swatch spray'}
+                style={{ background: sp.color }}
+                onClick={() => setSpray(selectedFlower.id, selectedFlower.spray === sp.color ? undefined : sp.color)}
+                title={sp.label}
+                aria-label={`喷漆 ${sp.label}`}
               />
             ))}
             <button type="button" className="toolbar-btn" onClick={() => remove(selectedFlower.id)}>取走</button>
