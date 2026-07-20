@@ -585,6 +585,46 @@ body {
   to { opacity: 1; transform: rotate(1.5deg) translateY(0); }
 }
 
+/* stem-limit snackbar */
+
+.limit-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 2rem;
+  z-index: 50;
+  transform: translateX(-50%);
+  background: #3d3327;
+  color: #f8f4ea;
+  font-size: 0.92rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 14px 8px 16px 9px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  animation: limit-in 0.25s ease-out, limit-out 0.4s ease-in 2.15s forwards;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+@keyframes limit-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes limit-out {
+  to { opacity: 0; transform: translateX(-50%) translateY(10px); }
+}
+
+@media (max-width: 560px) {
+  .limit-toast { white-space: normal; text-align: center; max-width: 88vw; }
+}
+
+.bouquet-name {
+  font-family: 'Songti SC', 'STSong', Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--moss-deep);
+  margin-bottom: 0.4rem !important;
+}
+
 @keyframes note-out {
   to { opacity: 0; transform: rotate(4deg) translateY(-6px); }
 }

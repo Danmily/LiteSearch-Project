@@ -424,7 +424,7 @@ const THEME_KEY = 'huayuji-theme-v1'
 const LIGHT_KEY = 'huayuji-light-v1'
 const CRAYON_KEY = 'huayuji-crayon-v1'
 const VASE_COLORS = ['#c67d54', '#7c93a8', '#5b7d64', '#d9c07a', '#8a6b9e', '#e6e2d6']
-const MAX_STEMS = 18
+const MAX_STEMS = 26
 
 let nextId = 1
 
@@ -446,12 +446,14 @@ export default function Studio() {
   const [vaseIdx, setVaseIdx] = useState(0)
   const [selected, setSelected] = useState<number | null>(null)
   const [note, setNote] = useState<Note | null>(null)
-  const [critique, setCritique] = useState<string | null>(null)
-  const [critiqueLoading, setCritiqueLoading] = useState(false)
+  const [limitNote, setLimitNote] = useState<number | null>(null)
+  const [description, setDescription] = useState<{ name: string; blurb: string } | null>(null)
+  const [descLoading, setDescLoading] = useState(false)
   const [petalRain, setPetalRain] = useState(false)
   const svgRef = useRef<SVGSVGElement>(null)
   const dragRef = useRef<{ id: number; moved: boolean } | null>(null)
   const noteTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const limitTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const theme = THEMES.find((t) => t.key === themeKey) ?? THEMES[0]
   const light = LIGHTS.find((l) => l.key === lightKey) ?? LIGHTS[0]
@@ -468,6 +470,12 @@ export default function Studio() {
     noteTimer.current = setTimeout(() => setNote(null), 4200)
   }
 
+  function showLimitNote() {
+    clearTimeout(limitTimer.current)
+    setLimitNote(Date.now())
+    limitTimer.current = setTimeout(() => setLimitNote(null), 2600)
+  }
+
   function pickColor(kind: Kind): number {
     const def = FLOWER_DEFS[kind]
     if (theme.targets.length === 0) return Math.floor(Math.random() * def.palette.length)
@@ -475,7 +483,10 @@ export default function Studio() {
   }
 
   function addFlower(kind: Kind) {
-    if (placed.length >= MAX_STEMS) return
+    if (placed.length >= MAX_STEMS) {
+      showLimitNote()
+      return
+    }
     const def = FLOWER_DEFS[kind]
     const head = placeHead(def.role, placed.length)
     const flower: Placed = {
@@ -491,7 +502,7 @@ export default function Studio() {
     }
     setPlaced((p) => [...p, flower])
     setSelected(flower.id)
-    setCritique(null)
+    setDescription(null)
     showNote(kind)
   }
 
@@ -558,7 +569,7 @@ export default function Studio() {
   function clearAll() {
     setPlaced([])
     setSelected(null)
-    setCritique(null)
+    setDescription(null)
   }
 
   function applyTheme(t: Theme) {
@@ -622,8 +633,8 @@ export default function Studio() {
     return { tip, suggest: new Set(suggest) }
   }, [placed, theme])
 
-  async function askCritique() {
-    if (placed.length === 0 || critiqueLoading) return
+  async function askDescribe() {
+    if (placed.length === 0 || descLoading) return
     const counts = new Map<string, number>()
     for (const f of placed) {
       const label = FLOWER_DEFS[f.kind].label
@@ -631,21 +642,21 @@ export default function Studio() {
     }
     const desc = [...counts.entries()].map(([n, c]) => `${n}x${c}`).join(',')
     const q = theme.targets.length ? `主题:${theme.label};${desc}` : desc
-    setCritiqueLoading(true)
-    setCritique(null)
+    setDescLoading(true)
+    setDescription(null)
     try {
-      const url = new URL('/critique', API_BASE)
+      const url = new URL('/describe', API_BASE)
       url.searchParams.set('q', q)
       const res = await fetch(url)
       if (!res.ok) throw new Error(`${res.status}`)
       const data = await res.json()
-      setCritique(data.critique)
+      setDescription({ name: data.name, blurb: data.blurb })
       setPetalRain(true)
       setTimeout(() => setPetalRain(false), 7000)
     } catch {
-      setCritique('花艺老师暂时联系不上,稍后再试试吧(后端服务开着吗?)')
+      setDescription({ name: '此刻无题', blurb: '花艺师暂时联系不上,稍后再试试吧(后端服务开着吗?)' })
     } finally {
-      setCritiqueLoading(false)
+      setDescLoading(false)
     }
   }
 
@@ -660,6 +671,12 @@ export default function Studio() {
 
   return (
     <div className="studio">
+      {limitNote && (
+        <div className="limit-toast" key={limitNote}>
+          这一瓶已经满啦(最多 {MAX_STEMS} 枝)· 摘掉几枝再试试
+        </div>
+      )}
+
       <p className="studio-hint">
         从花架摘花入瓶 · 大花做焦点 / 碎花填空 / 叶材收边 · 拖动花头弯枝 · 点选后可换色 / 喷漆 / 调前后层级
       </p>
@@ -890,8 +907,8 @@ export default function Studio() {
       </div>
 
       <div className="studio-actions">
-        <button type="button" className="ink-btn" onClick={askCritique} disabled={placed.length === 0 || critiqueLoading}>
-          {critiqueLoading ? '老师端详中…' : '请花艺老师点评'}
+        <button type="button" className="ink-btn" onClick={askDescribe} disabled={placed.length === 0 || descLoading}>
+          {descLoading ? '文案构思中…' : '生成花束介绍语'}
         </button>
         {theme.targets.length > 0 && (
           <button type="button" className="ink-btn ghost" onClick={recolorToTheme} disabled={placed.length === 0}>
@@ -903,10 +920,11 @@ export default function Studio() {
         </button>
       </div>
 
-      {critique && (
+      {description && (
         <section className="note critique-note">
-          <div className="note-label">花艺老师说</div>
-          <p className="note-text">{critique}</p>
+          <div className="note-label">花束名片</div>
+          <p className="note-text bouquet-name">{description.name}</p>
+          <p className="note-text">{description.blurb}</p>
         </section>
       )}
     </div>
