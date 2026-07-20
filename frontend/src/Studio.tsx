@@ -399,6 +399,7 @@ function placeHead(role: Role, count: number): { x: number; y: number } {
 }
 
 const Z: Record<Role, number> = { foliage: 0, spike: 1, focal: 2, standard: 3, filler: 4 }
+const zval = (f: Placed): number => f.z ?? Z[FLOWER_DEFS[f.kind].role]
 
 /* ---------- studio ---------- */
 
@@ -407,6 +408,7 @@ interface Placed {
   kind: Kind
   colorIdx: number
   spray?: string
+  z?: number
   ax: number
   ay: number
   x: number
@@ -534,6 +536,20 @@ export default function Studio() {
     setPlaced((p) => p.map((f) => (f.id === id ? { ...f, spray: color } : f)))
   }
 
+  function bringFront(id: number) {
+    setPlaced((p) => {
+      const max = Math.max(...p.map(zval))
+      return p.map((f) => (f.id === id ? { ...f, z: max + 1 } : f))
+    })
+  }
+
+  function sendBack(id: number) {
+    setPlaced((p) => {
+      const min = Math.min(...p.map(zval))
+      return p.map((f) => (f.id === id ? { ...f, z: min - 1 } : f))
+    })
+  }
+
   function remove(id: number) {
     setPlaced((p) => p.filter((f) => f.id !== id))
     setSelected(null)
@@ -636,8 +652,8 @@ export default function Studio() {
   const selectedFlower = placed.find((f) => f.id === selected)
   const vaseColor = VASE_COLORS[vaseIdx]
   const drawOrder = [...placed].sort((a, b) => {
-    const za = Z[FLOWER_DEFS[a.kind].role]
-    const zb = Z[FLOWER_DEFS[b.kind].role]
+    const za = zval(a)
+    const zb = zval(b)
     if (za !== zb) return za - zb
     return a.y - b.y
   })
@@ -645,7 +661,7 @@ export default function Studio() {
   return (
     <div className="studio">
       <p className="studio-hint">
-        从花架摘花入瓶 · 大花做焦点 / 碎花填空 / 叶材收边 · 拖动花头弯枝 · 点选换色
+        从花架摘花入瓶 · 大花做焦点 / 碎花填空 / 叶材收边 · 拖动花头弯枝 · 点选后可换色 / 喷漆 / 调前后层级
       </p>
 
       {/* colour themes */}
@@ -865,6 +881,9 @@ export default function Studio() {
                 aria-label={`喷漆 ${sp.label}`}
               />
             ))}
+            <span className="toolbar-div" />
+            <button type="button" className="toolbar-btn" onClick={() => bringFront(selectedFlower.id)} title="移到最前">置前</button>
+            <button type="button" className="toolbar-btn" onClick={() => sendBack(selectedFlower.id)} title="压到最后">置后</button>
             <button type="button" className="toolbar-btn" onClick={() => remove(selectedFlower.id)}>取走</button>
           </div>
         )}
