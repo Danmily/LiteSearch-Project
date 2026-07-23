@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
 
 const API_BASE = 'http://localhost:8000'
-const INK = '#4a4238'
+export const INK = '#4a4238'
 
-type Kind =
+export type Kind =
   | 'rose'
   | 'peony'
   | 'ranunculus'
@@ -22,7 +22,7 @@ type Kind =
   | 'gypsophila'
   | 'eucalyptus'
 
-type Role = 'focal' | 'standard' | 'filler' | 'spike' | 'foliage'
+export type Role = 'focal' | 'standard' | 'filler' | 'spike' | 'foliage'
 
 interface FlowerDef {
   label: string
@@ -111,9 +111,9 @@ const KINDS = Object.keys(FLOWER_DEFS) as Kind[]
 
 /* ---------- color themes ---------- */
 
-interface Theme { key: string; label: string; targets: string[]; swatch: string[] }
+export interface Theme { key: string; label: string; targets: string[]; swatch: string[] }
 
-const THEMES: Theme[] = [
+export const THEMES: Theme[] = [
   { key: 'none', label: '自由', targets: [], swatch: ['#e59aae', '#f2b31f', '#9db8dd'] },
   { key: 'moonlight', label: '白紫月光', targets: ['#f5f0e2', '#b6cdf0', '#b184c9', '#9caf88'], swatch: ['#f5f0e2', '#b6cdf0', '#b184c9'] },
   { key: 'romance', label: '粉色浪漫', targets: ['#f2b8c6', '#e59aae', '#f2d3da', '#f7e9d8'], swatch: ['#f2b8c6', '#e59aae', '#f2d3da'] },
@@ -142,7 +142,7 @@ function bestPaletteIdx(palette: string[], targets: string[]): { idx: number; di
 }
 const THEME_FIT = 9000 // squared-rgb threshold: below = "fits the theme"
 
-function mixHex(a: string, b: string, t: number): string {
+export function mixHex(a: string, b: string, t: number): string {
   const [r1, g1, b1] = hexRgb(a)
   const [r2, g2, b2] = hexRgb(b)
   const m = (x: number, y: number) => Math.round(x + (y - x) * t).toString(16).padStart(2, '0')
@@ -162,8 +162,8 @@ const SPRAYS: Spray[] = [
 
 /* ---------- lighting moods ---------- */
 
-interface Light { key: string; label: string; bg: string; overlay: string; blend: string; dark?: boolean }
-const LIGHTS: Light[] = [
+export interface Light { key: string; label: string; bg: string; overlay: string; blend: string; dark?: boolean }
+export const LIGHTS: Light[] = [
   { key: 'studio', label: '柔光棚', bg: '#fdfaf1', overlay: 'none', blend: 'normal' },
   { key: 'morning', label: '晨光', bg: '#fdf7ea', overlay: 'linear-gradient(115deg, rgba(255,214,140,0.34), rgba(255,255,255,0) 55%)', blend: 'soft-light' },
   { key: 'golden', label: '黄昏', bg: '#f4e6cf', overlay: 'radial-gradient(120% 95% at 78% 15%, rgba(255,168,86,0.42), rgba(150,86,44,0.14) 72%)', blend: 'soft-light' },
@@ -398,12 +398,12 @@ function placeHead(role: Role, count: number): { x: number; y: number } {
   }
 }
 
-const Z: Record<Role, number> = { foliage: 0, spike: 1, focal: 2, standard: 3, filler: 4 }
+export const Z: Record<Role, number> = { foliage: 0, spike: 1, focal: 2, standard: 3, filler: 4 }
 const zval = (f: Placed): number => f.z ?? Z[FLOWER_DEFS[f.kind].role]
 
 /* ---------- studio ---------- */
 
-interface Placed {
+export interface Placed {
   id: number
   kind: Kind
   colorIdx: number
@@ -423,7 +423,8 @@ const STORAGE_KEY = 'huayuji-arrangement-v2'
 const THEME_KEY = 'huayuji-theme-v1'
 const LIGHT_KEY = 'huayuji-light-v1'
 const CRAYON_KEY = 'huayuji-crayon-v1'
-const VASE_COLORS = ['#c67d54', '#7c93a8', '#5b7d64', '#d9c07a', '#8a6b9e', '#e6e2d6']
+export const NICKNAME_KEY = 'huayuji-nickname'
+export const VASE_COLORS = ['#c67d54', '#7c93a8', '#5b7d64', '#d9c07a', '#8a6b9e', '#e6e2d6']
 const MAX_STEMS = 26
 
 let nextId = 1
@@ -449,6 +450,13 @@ export default function Studio() {
   const [limitNote, setLimitNote] = useState<number | null>(null)
   const [description, setDescription] = useState<{ name: string; blurb: string } | null>(null)
   const [descLoading, setDescLoading] = useState(false)
+  const [publishOpen, setPublishOpen] = useState(false)
+  const [nicknameDraft, setNicknameDraft] = useState(() => localStorage.getItem(NICKNAME_KEY) ?? '')
+  const [captionDraft, setCaptionDraft] = useState('')
+  const [publishing, setPublishing] = useState(false)
+  const [publishError, setPublishError] = useState<string | null>(null)
+  const [publishedLink, setPublishedLink] = useState<string | null>(null)
+  const [copyOk, setCopyOk] = useState(false)
   const [petalRain, setPetalRain] = useState(false)
   const svgRef = useRef<SVGSVGElement>(null)
   const dragRef = useRef<{ id: number; moved: boolean } | null>(null)
@@ -657,6 +665,40 @@ export default function Studio() {
       setDescription({ name: '此刻无题', blurb: '花艺师暂时联系不上,稍后再试试吧(后端服务开着吗?)' })
     } finally {
       setDescLoading(false)
+    }
+  }
+
+  async function publish() {
+    if (!nicknameDraft.trim() || placed.length === 0 || publishing) return
+    setPublishing(true)
+    setPublishError(null)
+    try {
+      const snapshot = { placed, vaseIdx, themeKey, lightKey, crayon }
+      const res = await fetch(new URL('/gallery/posts', API_BASE), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nickname: nicknameDraft.trim(), caption: captionDraft.trim(), snapshot }),
+      })
+      if (!res.ok) throw new Error(`请求失败: ${res.status}`)
+      const data = await res.json()
+      localStorage.setItem(NICKNAME_KEY, nicknameDraft.trim())
+      setPublishedLink(`${window.location.origin}${window.location.pathname}?post=${data.id}`)
+      setCopyOk(false)
+    } catch (err) {
+      setPublishError(err instanceof Error ? err.message : '未知错误')
+    } finally {
+      setPublishing(false)
+    }
+  }
+
+  async function copyPublishedLink() {
+    if (!publishedLink) return
+    try {
+      await navigator.clipboard.writeText(publishedLink)
+      setCopyOk(true)
+      setTimeout(() => setCopyOk(false), 2000)
+    } catch {
+      setPublishError('复制失败,链接就在上面,手动选中复制吧')
     }
   }
 
@@ -918,6 +960,14 @@ export default function Studio() {
         <button type="button" className="ink-btn ghost" onClick={clearAll} disabled={placed.length === 0}>
           重新来过
         </button>
+        <button
+          type="button"
+          className="ink-btn ghost"
+          onClick={() => { setPublishOpen((o) => !o); setPublishedLink(null); setPublishError(null) }}
+          disabled={placed.length === 0}
+        >
+          发布到集市
+        </button>
       </div>
 
       {description && (
@@ -925,6 +975,50 @@ export default function Studio() {
           <div className="note-label">花束名片</div>
           <p className="note-text bouquet-name">{description.name}</p>
           <p className="note-text">{description.blurb}</p>
+        </section>
+      )}
+
+      {publishOpen && (
+        <section className="note publish-note">
+          {!publishedLink ? (
+            <>
+              <div className="note-label">发布到集市</div>
+              <div className="publish-fields">
+                <input
+                  type="text"
+                  className="publish-input"
+                  placeholder="你的昵称"
+                  value={nicknameDraft}
+                  onChange={(e) => setNicknameDraft(e.target.value)}
+                  maxLength={24}
+                />
+                <input
+                  type="text"
+                  className="publish-input"
+                  placeholder="说两句这束花的心意(可不填)"
+                  value={captionDraft}
+                  onChange={(e) => setCaptionDraft(e.target.value)}
+                  maxLength={300}
+                />
+                <button type="button" className="ink-btn" onClick={publish} disabled={!nicknameDraft.trim() || publishing}>
+                  {publishing ? '发布中…' : '确认发布'}
+                </button>
+              </div>
+              {publishError && <p className="error">{publishError}</p>}
+            </>
+          ) : (
+            <>
+              <div className="note-label">已发布</div>
+              <p className="note-text">别人打开这个链接就能看到你插的这瓶花。</p>
+              <div className="publish-fields">
+                <input type="text" className="publish-input" readOnly value={publishedLink} onFocus={(e) => e.target.select()} />
+                <button type="button" className="ink-btn" onClick={copyPublishedLink}>
+                  {copyOk ? '已复制' : '复制链接'}
+                </button>
+              </div>
+              <p className="hint">目前只在这台机器、这个本地服务上有效,还不是能发给别人打开的公网链接</p>
+            </>
+          )}
         </section>
       )}
     </div>

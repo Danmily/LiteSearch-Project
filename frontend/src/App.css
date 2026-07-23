@@ -792,6 +792,77 @@ body {
   .agent-step { animation: none; }
 }
 
+/* ---- publish panel (studio + gallery nickname/comment forms) ---- */
+
+.publish-note { margin-top: 1.2rem; }
+
+.publish-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.publish-input {
+  flex: 1;
+  min-width: 160px;
+  padding: 0.55rem 0.85rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  border: 1.5px solid var(--line);
+  border-radius: 12px 7px 13px 8px;
+  background: var(--card);
+  color: var(--ink);
+}
+.publish-input:focus { outline: none; border-color: var(--moss); }
+
+.nickname-gate { max-width: 420px; margin: 0 auto 1rem; }
+
+/* ---- read-only arrangement renderer (Studio + Gallery share this) ---- */
+
+.arrangement-view {
+  position: relative;
+  border-radius: var(--wobble);
+  overflow: hidden;
+  transition: background 0.5s ease;
+}
+
+.arrangement-svg { display: block; width: 100%; height: auto; }
+
+/* ---- gallery ---- */
+
+.gallery-grid {
+  list-style: none;
+  padding: 0;
+  margin: 1.2rem 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.1rem;
+}
+
+.gallery-card { cursor: pointer; padding-top: 0; overflow: hidden; }
+.gallery-card:hover { border-color: var(--ink-soft); }
+
+.gallery-thumb {
+  margin: -1px -1px 0.6rem;
+  border-bottom: 1.5px solid var(--line);
+}
+.gallery-thumb .arrangement-view { border-radius: 0; }
+
+.gallery-card .card-index,
+.gallery-card .card-body,
+.gallery-card .card-meta { padding-left: 1.2rem; padding-right: 1.2rem; }
+.gallery-card .card-meta:last-child { padding-bottom: 1.1rem; }
+.gallery-card .card-meta { display: flex; gap: 1rem; }
+
+.gallery-detail { max-width: 620px; margin: 1.2rem auto 0; }
+.gallery-detail-scene { margin-bottom: 0.9rem; }
+.gallery-detail-scene .arrangement-view { border: 2px solid var(--ink-soft); }
+
+.gallery-actions { margin: 0.9rem 0; }
+
+.gallery-comments { margin: 0.8rem 0 1.2rem; }
+
 /* ---- colophon ---- */
 
 .colophon {

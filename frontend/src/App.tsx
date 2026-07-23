@@ -1,7 +1,14 @@
 import { useState, type FormEvent } from 'react'
 import Studio from './Studio'
 import ComplexRequest from './ComplexRequest'
+import Gallery from './Gallery'
 import './App.css'
+
+function initialGalleryPostId(): number | null {
+  const raw = new URLSearchParams(window.location.search).get('post')
+  const n = raw ? Number(raw) : NaN
+  return Number.isFinite(n) ? n : null
+}
 
 const API_BASE = 'http://localhost:8000'
 
@@ -80,7 +87,10 @@ function FlowerGrid({ cards }: { cards: FlowerCard[] }) {
 }
 
 function App() {
-  const [tab, setTab] = useState<'studio' | 'recommend' | 'search' | 'plan'>('studio')
+  const [galleryPostId] = useState<number | null>(() => initialGalleryPostId())
+  const [tab, setTab] = useState<'studio' | 'recommend' | 'search' | 'plan' | 'gallery'>(() =>
+    initialGalleryPostId() !== null ? 'gallery' : 'studio',
+  )
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -182,12 +192,21 @@ function App() {
         >
           复杂需求
         </button>
+        <span className="tab-divider">/</span>
+        <button
+          type="button"
+          className={tab === 'gallery' ? 'tab active' : 'tab'}
+          onClick={() => setTab('gallery')}
+        >
+          花友集市
+        </button>
       </nav>
 
       {tab === 'studio' && <Studio />}
       {tab === 'plan' && <ComplexRequest />}
+      {tab === 'gallery' && <Gallery initialPostId={galleryPostId} />}
 
-      {tab !== 'studio' && tab !== 'plan' && (
+      {tab !== 'studio' && tab !== 'plan' && tab !== 'gallery' && (
       <form className="search-bar" onSubmit={submit}>
         <input
           type="text"
