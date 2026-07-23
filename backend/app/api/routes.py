@@ -2,7 +2,9 @@ import re
 from pathlib import Path
 
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 
+from app.agent.pipeline import run_pipeline
 from app.ingestion.pipeline import DEFAULT_INDEX_PATH, build_index
 from app.models.local_llm import get_generation_model
 from app.observability.tracing import traced_stage
@@ -91,6 +93,11 @@ def describe(q: str) -> dict:
     name = name_match.group(1).strip() if name_match else "无题花束"
     blurb = blurb_match.group(1).strip() if blurb_match else raw.strip()
     return {"arrangement": q, "name": name, "blurb": blurb}
+
+
+@router.get("/plan")
+def plan(q: str) -> StreamingResponse:
+    return StreamingResponse(run_pipeline(q), media_type="application/x-ndjson")
 
 
 @router.post("/ingest")

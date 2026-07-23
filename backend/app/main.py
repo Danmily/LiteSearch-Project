@@ -16,7 +16,11 @@ app.add_middleware(
 
 @app.middleware("http")
 async def tracing_middleware(request: Request, call_next):
-    if request.url.path in {"/health", "/docs", "/openapi.json"}:
+    if request.url.path in {"/health", "/docs", "/openapi.json", "/plan"}:
+        # /plan manages its own trace lifecycle inside run_pipeline() because it
+        # streams: call_next() returns once the StreamingResponse is constructed,
+        # before the body generator has actually run — a finally-block finish()
+        # here would cut off every stage recorded during the later agent turns.
         return await call_next(request)
 
     trace = start_trace(

@@ -730,6 +730,68 @@ body {
 
 .critique-note { margin-top: 1.6rem; }
 
+/* ---- complex-request agent log ---- */
+
+.agent-log { margin: 1.4rem 0; max-width: 680px; }
+
+.agent-step-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.agent-step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  animation: note-in 0.3s ease-out;
+}
+
+.agent-step-role {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: var(--moss-deep);
+  min-width: 3.6em;
+}
+
+.agent-step-text { color: var(--ink-soft); }
+
+.agent-step-sublist {
+  flex-basis: 100%;
+  list-style: none;
+  margin: 0.2rem 0 0 3.6em;
+  padding: 0;
+  color: var(--ink-faint);
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.badge-pass,
+.badge-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 10px 5px 12px 5px;
+  border: 1.5px solid;
+}
+
+.badge-pass { color: var(--moss-deep); border-color: var(--moss); background: #eef1e2; }
+.badge-flag { color: var(--plum); border-color: var(--plum); background: #f7ecef; }
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-step { animation: none; }
+}
+
 /* ---- colophon ---- */
 
 .colophon {

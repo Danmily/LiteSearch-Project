@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import Studio from './Studio'
+import ComplexRequest from './ComplexRequest'
 import './App.css'
 
 const API_BASE = 'http://localhost:8000'
@@ -79,7 +80,7 @@ function FlowerGrid({ cards }: { cards: FlowerCard[] }) {
 }
 
 function App() {
-  const [tab, setTab] = useState<'studio' | 'recommend' | 'search'>('studio')
+  const [tab, setTab] = useState<'studio' | 'recommend' | 'search' | 'plan'>('studio')
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -173,11 +174,20 @@ function App() {
         >
           图鉴检索
         </button>
+        <span className="tab-divider">/</span>
+        <button
+          type="button"
+          className={tab === 'plan' ? 'tab active' : 'tab'}
+          onClick={() => setTab('plan')}
+        >
+          复杂需求
+        </button>
       </nav>
 
       {tab === 'studio' && <Studio />}
+      {tab === 'plan' && <ComplexRequest />}
 
-      {tab !== 'studio' && (
+      {tab !== 'studio' && tab !== 'plan' && (
       <form className="search-bar" onSubmit={submit}>
         <input
           type="text"
