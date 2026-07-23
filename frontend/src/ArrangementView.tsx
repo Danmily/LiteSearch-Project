@@ -1,9 +1,13 @@
 import type { CSSProperties } from 'react'
-import { Bloom, FLOWER_DEFS, INK, LIGHTS, VASE_COLORS, Z, mixHex, type Placed } from './Studio'
+import { Bloom, FLOWER_DEFS, INK, LIGHTS, VASE_KINDS, VaseWithDecor, Z, mixHex, type DecorKey, type Placed } from './Studio'
 
 export interface Snapshot {
   placed: Placed[]
-  vaseIdx: number
+  vaseKind?: string
+  vaseColorIdx?: number
+  vaseDecor?: DecorKey[]
+  /** legacy field from before the container system existed; ignored if present */
+  vaseIdx?: number
   themeKey?: string
   lightKey: string
   crayon: boolean
@@ -12,12 +16,13 @@ export interface Snapshot {
 const zval = (f: Placed): number => f.z ?? Z[FLOWER_DEFS[f.kind].role]
 
 /** Read-only render of a saved arrangement — no drag, no selection, no toolbar.
- *  Deliberately duplicates Studio's vase/bloom drawing instead of sharing a
- *  component, since Studio's canvas is tightly coupled to its interactive
- *  state; see docs/agent-design.md-style note in the gallery plan. */
+ *  Deliberately duplicates Studio's bloom-drawing shell (not the flowers or
+ *  the vase, both of which are shared components) instead of reusing Studio's
+ *  interactive canvas, since that canvas is tightly coupled to its drag/
+ *  selection state; see the gallery feature's design notes. */
 export default function ArrangementView({ snapshot }: { snapshot: Snapshot }) {
   const light = LIGHTS.find((l) => l.key === snapshot.lightKey) ?? LIGHTS[0]
-  const vaseColor = VASE_COLORS[snapshot.vaseIdx] ?? VASE_COLORS[0]
+  const vaseKind = snapshot.vaseKind && VASE_KINDS.some((v) => v.key === snapshot.vaseKind) ? snapshot.vaseKind : VASE_KINDS[0].key
   const drawOrder = [...snapshot.placed].sort((a, b) => {
     const za = zval(a)
     const zb = zval(b)
@@ -48,14 +53,7 @@ export default function ArrangementView({ snapshot }: { snapshot: Snapshot }) {
           )
         })}
 
-        <g>
-          <path
-            d="M332,362 C330,368 334,372 341,373 C329,402 325,442 342,468 C353,487 407,487 418,468 C435,442 431,402 419,373 C426,372 430,368 428,362 Z"
-            fill={vaseColor} fillOpacity="0.92" stroke={INK} strokeWidth="2.2" strokeLinejoin="round"
-          />
-          <ellipse cx="380" cy="362" rx="48" ry="7" fill={vaseColor} stroke={INK} strokeWidth="2" />
-          <path d="M348,430 C350,448 356,462 366,470" fill="none" stroke="#fff" strokeOpacity="0.45" strokeWidth="4" strokeLinecap="round" />
-        </g>
+        <VaseWithDecor kind={vaseKind} colorIdx={snapshot.vaseColorIdx ?? 0} decor={snapshot.vaseDecor ?? []} />
 
         {drawOrder.map((f) => {
           const def = FLOWER_DEFS[f.kind]

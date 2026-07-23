@@ -352,6 +352,8 @@ body {
 .theme-chip:hover { transform: translateY(-2px) rotate(-1deg); }
 .theme-chip.on { border-color: var(--moss-deep); color: var(--moss-deep); }
 
+.vase-chip svg { display: block; flex-shrink: 0; }
+
 .theme-dots {
   display: inline-flex;
 }

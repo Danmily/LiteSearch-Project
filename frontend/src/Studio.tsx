@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
 
 const API_BASE = 'http://localhost:8000'
 export const INK = '#4a4238'
@@ -368,6 +368,183 @@ export function Bloom({ kind, color }: { kind: Kind; color: string }) {
   }
 }
 
+/* ---------- containers ---------- */
+
+export type VaseMaterial = 'ceramic' | 'glass' | 'bamboo' | 'metal'
+
+export interface VaseKind {
+  key: string
+  label: string
+  material: VaseMaterial
+  /** fixed tint for glass kinds; color choices for ceramic/bamboo/metal */
+  palette: string[]
+  rimRx: number
+  rimRy: number
+}
+
+export const VASE_KINDS: VaseKind[] = [
+  { key: 'ceramic', label: '陶瓷花瓶', material: 'ceramic', palette: ['#f7f3ea', '#8298ab', '#d9c9a3'], rimRx: 48, rimRy: 7 },
+  { key: 'glass-round', label: '玻璃花瓶(圆形)', material: 'glass', palette: ['#cfe3dd'], rimRx: 48, rimRy: 7 },
+  { key: 'glass-square', label: '玻璃花瓶(方形)', material: 'glass', palette: ['#cddbe8'], rimRx: 36, rimRy: 7 },
+  { key: 'glass-tall', label: '玻璃花瓶(高瘦型)', material: 'glass', palette: ['#d7e8d2'], rimRx: 24, rimRy: 6 },
+  { key: 'glass-cup', label: '玻璃杯', material: 'glass', palette: ['#e8e3d5'], rimRx: 54, rimRy: 7 },
+  { key: 'bamboo', label: '竹筒', material: 'bamboo', palette: ['#8ea86a', '#c9a877'], rimRx: 24, rimRy: 6 },
+  { key: 'metal', label: '金属花瓶', material: 'metal', palette: ['#b9bfc4', '#c9a227'], rimRx: 36, rimRy: 6.5 },
+]
+
+export type DecorKey = 'ribbon' | 'beads' | 'bow' | 'pebbles'
+
+export const DECORATIONS: { key: DecorKey; label: string }[] = [
+  { key: 'ribbon', label: '丝带' },
+  { key: 'beads', label: '珠串' },
+  { key: 'bow', label: '蝴蝶结' },
+  { key: 'pebbles', label: '小石子' },
+]
+
+const ROUND_BODY = 'M334,362 C330,370 332,376 340,378 C325,406 322,446 340,470 C352,487 408,487 420,470 C438,446 435,406 420,378 C428,376 430,370 426,362 Z'
+const TALL_BODY = 'M358,362 C356,368 358,372 362,374 C357,410 357,450 364,470 C370,484 390,484 396,470 C403,450 403,410 398,374 C402,372 404,368 402,362 Z'
+const CUP_BODY = 'M330,362 C328,368 332,372 338,374 C334,394 334,414 340,427 C348,437 412,437 420,427 C426,414 426,394 422,374 C428,372 432,368 430,362 Z'
+const METAL_BODY = 'M348,362 C346,368 350,372 356,374 C348,392 344,408 356,420 C346,432 344,452 358,468 C368,480 392,480 402,468 C416,452 414,432 404,420 C416,408 412,392 404,374 C410,372 414,368 412,362 Z'
+const SQUARE_FRONT = 'M344,378 L416,378 L420,470 L340,470 Z'
+const SQUARE_TOP = 'M344,378 L416,378 L406,364 L354,364 Z'
+const SQUARE_SIDE = 'M392,378 L416,378 L420,470 L398,470 Z'
+
+function VaseDecor({ decor }: { decor: DecorKey[] }) {
+  return (
+    <g>
+      {decor.includes('ribbon') && (
+        <g>
+          <path d="M341,373 C363,384 397,384 419,373 L419,389 C397,400 363,400 341,389 Z" fill="#c9607e" stroke={INK} strokeWidth="1.4" fillOpacity="0.92" />
+          <path d="M372,377 L372,394 M388,377 L388,394" stroke="#a84763" strokeWidth="1" opacity="0.55" />
+        </g>
+      )}
+      {decor.includes('beads') && (
+        <g>
+          {([[340, 379], [355, 390], [370, 396], [380, 398], [390, 396], [405, 390], [420, 379]] as [number, number][]).map(([x, y], i) => (
+            <circle key={i} cx={x} cy={y} r="3.6" fill="#e8d27a" stroke={INK} strokeWidth="1.1" />
+          ))}
+        </g>
+      )}
+      {decor.includes('bow') && (
+        <g>
+          <path d="M380,380 C372,371 357,373 358,383 C358,391 372,389 380,384" fill="#d98fa3" stroke={INK} strokeWidth="1.3" />
+          <path d="M380,380 C388,371 403,373 402,383 C402,391 388,389 380,384" fill="#d98fa3" stroke={INK} strokeWidth="1.3" />
+          <circle cx="380" cy="382" r="4" fill="#b8607a" stroke={INK} strokeWidth="1.1" />
+        </g>
+      )}
+      {decor.includes('pebbles') && (
+        <g>
+          {([[350, 486, 9, 6, '#b7ada0'], [368, 490, 7, 5, '#c9c1b4'], [388, 491, 8, 5.5, '#a89e90'], [405, 487, 6, 4.5, '#c2b8a9']] as [number, number, number, number, string][]).map(
+            ([x, y, rx, ry, fill], i) => (
+              <ellipse key={i} cx={x} cy={y} rx={rx} ry={ry} fill={fill} stroke={INK} strokeWidth="1.1" />
+            ),
+          )}
+        </g>
+      )}
+    </g>
+  )
+}
+
+/** Renders any of VASE_KINDS with its material effect + optional decorations.
+ *  Shared verbatim between Studio's interactive canvas and the read-only
+ *  ArrangementView, unlike Bloom which has no such reuse concern here. */
+export function VaseGraphic({ kind, colorIdx }: { kind: string; colorIdx: number }) {
+  const uid = useId()
+  const def = VASE_KINDS.find((v) => v.key === kind) ?? VASE_KINDS[0]
+  const color = def.palette[colorIdx] ?? def.palette[0]
+  const gid = (name: string) => `vase-${name}-${uid}`
+
+  if (def.material === 'glass') {
+    const body = def.key === 'glass-square' ? null : def.key === 'glass-tall' ? TALL_BODY : def.key === 'glass-cup' ? CUP_BODY : ROUND_BODY
+    return (
+      <g>
+        {def.key === 'glass-square' ? (
+          <g>
+            <path d={SQUARE_FRONT} fill={color} fillOpacity="0.38" stroke={INK} strokeWidth="2" strokeLinejoin="round" />
+            <path d={SQUARE_SIDE} fill={INK} fillOpacity="0.1" stroke="none" />
+            <path d="M352,392 L352,462 M360,388 L360,466" stroke="#ffffff" strokeOpacity="0.4" strokeWidth="3" strokeLinecap="round" />
+            <path d={SQUARE_TOP} fill={color} fillOpacity="0.55" stroke={INK} strokeWidth="2" strokeLinejoin="round" />
+            <path d="M354,364 L406,364 L399,368 L361,368 Z" fill={INK} fillOpacity="0.14" stroke="none" />
+          </g>
+        ) : (
+          <g>
+            <path d={body ?? ROUND_BODY} fill={color} fillOpacity="0.38" stroke={INK} strokeWidth="2" strokeLinejoin="round" />
+            <path
+              d={def.key === 'glass-tall' ? 'M366,380 L366,462' : def.key === 'glass-cup' ? 'M344,382 L344,424' : 'M348,388 L344,456'}
+              stroke="#ffffff" strokeOpacity="0.45" strokeWidth="4" strokeLinecap="round"
+            />
+            <ellipse cx="380" cy="362" rx={def.rimRx} ry={def.rimRy} fill={color} fillOpacity="0.55" stroke={INK} strokeWidth="2" />
+            <ellipse cx="380" cy="362" rx={def.rimRx - 7} ry={Math.max(def.rimRy - 2.5, 2)} fill={INK} fillOpacity="0.16" stroke="none" />
+          </g>
+        )}
+      </g>
+    )
+  }
+
+  if (def.material === 'ceramic') {
+    return (
+      <g>
+        <defs>
+          <linearGradient id={gid('ceramic')} x1="15%" y1="10%" x2="85%" y2="95%">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.55" />
+            <stop offset="45%" stopColor={color} stopOpacity="1" />
+            <stop offset="100%" stopColor={INK} stopOpacity="0.28" />
+          </linearGradient>
+        </defs>
+        <ellipse cx="380" cy="474" rx="46" ry="8" fill={INK} fillOpacity="0.14" stroke="none" />
+        <path d={ROUND_BODY} fill={`url(#${gid('ceramic')})`} stroke={INK} strokeWidth="2.2" strokeLinejoin="round" />
+        <path d="M336,410 C355,415 405,415 424,410" stroke={INK} strokeOpacity="0.16" strokeWidth="1" fill="none" />
+        <path d="M332,432 C355,438 405,438 428,432" stroke={INK} strokeOpacity="0.12" strokeWidth="1" fill="none" />
+        <ellipse cx="380" cy="362" rx={def.rimRx} ry={def.rimRy} fill={color} stroke={INK} strokeWidth="2" />
+        <ellipse cx="380" cy="362" rx={def.rimRx - 8} ry={Math.max(def.rimRy - 3, 2)} fill={INK} fillOpacity="0.22" stroke="none" />
+      </g>
+    )
+  }
+
+  if (def.material === 'bamboo') {
+    const dark = def.key === 'bamboo' && colorIdx === 0 ? '#5f7a40' : '#9c7a49'
+    return (
+      <g>
+        <path d={TALL_BODY} fill={color} stroke={INK} strokeWidth="2.2" strokeLinejoin="round" />
+        <path d="M362,376 L362,468 M370,376 L370,470 M390,376 L390,470 M398,376 L398,468" stroke={INK} strokeOpacity="0.13" strokeWidth="1" />
+        {[398, 428, 458].map((ny) => (
+          <path key={ny} d={`M357,${ny} C368,${ny + 4} 392,${ny + 4} 403,${ny}`} stroke={dark} strokeWidth="4" fill="none" strokeLinecap="round" />
+        ))}
+        <ellipse cx="380" cy="362" rx={def.rimRx} ry={def.rimRy} fill={color} stroke={INK} strokeWidth="2" />
+        <ellipse cx="380" cy="362" rx={def.rimRx - 6} ry={Math.max(def.rimRy - 2.5, 2)} fill={INK} fillOpacity="0.28" stroke="none" />
+      </g>
+    )
+  }
+
+  // metal
+  return (
+    <g>
+      <defs>
+        <linearGradient id={gid('metal')} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor={INK} stopOpacity="0.35" />
+          <stop offset="30%" stopColor={color} stopOpacity="1" />
+          <stop offset="48%" stopColor="#ffffff" stopOpacity="0.85" />
+          <stop offset="65%" stopColor={color} stopOpacity="1" />
+          <stop offset="100%" stopColor={INK} stopOpacity="0.4" />
+        </linearGradient>
+      </defs>
+      <path d={METAL_BODY} fill={`url(#${gid('metal')})`} stroke={INK} strokeWidth="2" strokeLinejoin="round" />
+      <path d="M362,380 L360,462" stroke="#ffffff" strokeOpacity="0.6" strokeWidth="2.4" strokeLinecap="round" />
+      <ellipse cx="380" cy="362" rx={def.rimRx} ry={def.rimRy} fill={color} stroke={INK} strokeWidth="2" />
+      <ellipse cx="380" cy="362" rx={def.rimRx - 6} ry={Math.max(def.rimRy - 2.5, 2)} fill={INK} fillOpacity="0.3" stroke="none" />
+    </g>
+  )
+}
+
+export function VaseWithDecor(props: { kind: string; colorIdx: number; decor: DecorKey[] }) {
+  return (
+    <>
+      <VaseGraphic {...props} />
+      <VaseDecor decor={props.decor} />
+    </>
+  )
+}
+
 /* ---------- placement by role ---------- */
 
 const CX = 380
@@ -423,8 +600,10 @@ const STORAGE_KEY = 'huayuji-arrangement-v2'
 const THEME_KEY = 'huayuji-theme-v1'
 const LIGHT_KEY = 'huayuji-light-v1'
 const CRAYON_KEY = 'huayuji-crayon-v1'
+const VASE_KIND_KEY = 'huayuji-vase-kind-v1'
+const VASE_COLOR_KEY = 'huayuji-vase-color-v1'
+const VASE_DECOR_KEY = 'huayuji-vase-decor-v1'
 export const NICKNAME_KEY = 'huayuji-nickname'
-export const VASE_COLORS = ['#c67d54', '#7c93a8', '#5b7d64', '#d9c07a', '#8a6b9e', '#e6e2d6']
 const MAX_STEMS = 26
 
 let nextId = 1
@@ -444,7 +623,15 @@ export default function Studio() {
   const [themeKey, setThemeKey] = useState<string>(() => localStorage.getItem(THEME_KEY) ?? 'none')
   const [lightKey, setLightKey] = useState<string>(() => localStorage.getItem(LIGHT_KEY) ?? 'studio')
   const [crayon, setCrayon] = useState<boolean>(() => localStorage.getItem(CRAYON_KEY) === '1')
-  const [vaseIdx, setVaseIdx] = useState(0)
+  const [vaseKind, setVaseKind] = useState<string>(() => localStorage.getItem(VASE_KIND_KEY) ?? VASE_KINDS[0].key)
+  const [vaseColorIdx, setVaseColorIdx] = useState<number>(() => Number(localStorage.getItem(VASE_COLOR_KEY) ?? 0))
+  const [vaseDecor, setVaseDecor] = useState<DecorKey[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(VASE_DECOR_KEY) ?? '[]')
+    } catch {
+      return []
+    }
+  })
   const [selected, setSelected] = useState<number | null>(null)
   const [note, setNote] = useState<Note | null>(null)
   const [limitNote, setLimitNote] = useState<number | null>(null)
@@ -470,6 +657,22 @@ export default function Studio() {
   useEffect(() => { localStorage.setItem(THEME_KEY, themeKey) }, [themeKey])
   useEffect(() => { localStorage.setItem(LIGHT_KEY, lightKey) }, [lightKey])
   useEffect(() => { localStorage.setItem(CRAYON_KEY, crayon ? '1' : '0') }, [crayon])
+  useEffect(() => { localStorage.setItem(VASE_KIND_KEY, vaseKind) }, [vaseKind])
+  useEffect(() => { localStorage.setItem(VASE_COLOR_KEY, String(vaseColorIdx)) }, [vaseColorIdx])
+  useEffect(() => { localStorage.setItem(VASE_DECOR_KEY, JSON.stringify(vaseDecor)) }, [vaseDecor])
+
+  function cycleVaseKind() {
+    setVaseKind((k) => {
+      const idx = VASE_KINDS.findIndex((v) => v.key === k)
+      const next = VASE_KINDS[(idx + 1) % VASE_KINDS.length]
+      setVaseColorIdx((c) => Math.min(c, next.palette.length - 1))
+      return next.key
+    })
+  }
+
+  function toggleDecor(key: DecorKey) {
+    setVaseDecor((d) => (d.includes(key) ? d.filter((x) => x !== key) : [...d, key]))
+  }
 
   function showNote(kind: Kind) {
     const def = FLOWER_DEFS[kind]
@@ -673,7 +876,7 @@ export default function Studio() {
     setPublishing(true)
     setPublishError(null)
     try {
-      const snapshot = { placed, vaseIdx, themeKey, lightKey, crayon }
+      const snapshot = { placed, vaseKind, vaseColorIdx, vaseDecor, themeKey, lightKey, crayon }
       const res = await fetch(new URL('/gallery/posts', API_BASE), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -703,7 +906,7 @@ export default function Studio() {
   }
 
   const selectedFlower = placed.find((f) => f.id === selected)
-  const vaseColor = VASE_COLORS[vaseIdx]
+  const vaseKindDef = VASE_KINDS.find((v) => v.key === vaseKind) ?? VASE_KINDS[0]
   const drawOrder = [...placed].sort((a, b) => {
     const za = zval(a)
     const zb = zval(b)
@@ -764,6 +967,54 @@ export default function Studio() {
         </button>
       </div>
 
+      {/* container */}
+      <div className="theme-bar vase-bar">
+        <span className="theme-bar-label">容器</span>
+        {VASE_KINDS.map((v) => (
+          <button
+            key={v.key}
+            type="button"
+            className={v.key === vaseKind ? 'theme-chip vase-chip on' : 'theme-chip vase-chip'}
+            onClick={() => { setVaseKind(v.key); setVaseColorIdx((c) => Math.min(c, v.palette.length - 1)) }}
+            title={v.label}
+          >
+            <svg viewBox="322 354 116 138" width="30" height="36" aria-hidden="true">
+              <VaseGraphic kind={v.key} colorIdx={0} />
+            </svg>
+            {v.label}
+          </button>
+        ))}
+        {vaseKindDef.palette.length > 1 && (
+          <>
+            <span className="toolbar-div" />
+            {vaseKindDef.palette.map((c, i) => (
+              <button
+                key={c}
+                type="button"
+                className={i === vaseColorIdx ? 'swatch on' : 'swatch'}
+                style={{ background: c }}
+                onClick={() => setVaseColorIdx(i)}
+                aria-label={`容器颜色 ${i + 1}`}
+              />
+            ))}
+          </>
+        )}
+      </div>
+
+      <div className="theme-bar">
+        <span className="theme-bar-label">装饰</span>
+        {DECORATIONS.map((d) => (
+          <button
+            key={d.key}
+            type="button"
+            className={vaseDecor.includes(d.key) ? 'theme-chip on' : 'theme-chip'}
+            onClick={() => toggleDecor(d.key)}
+          >
+            {d.label}
+          </button>
+        ))}
+      </div>
+
       <div className="shelf">
         {KINDS.map((kind) => (
           <button
@@ -814,13 +1065,8 @@ export default function Studio() {
           })}
 
           {/* vase */}
-          <g className="vase" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); setVaseIdx((v) => (v + 1) % VASE_COLORS.length) }}>
-            <path
-              d="M332,362 C330,368 334,372 341,373 C329,402 325,442 342,468 C353,487 407,487 418,468 C435,442 431,402 419,373 C426,372 430,368 428,362 Z"
-              fill={vaseColor} fillOpacity="0.92" stroke={INK} strokeWidth="2.2" strokeLinejoin="round"
-            />
-            <ellipse cx="380" cy="362" rx="48" ry="7" fill={vaseColor} stroke={INK} strokeWidth="2" />
-            <path d="M348,430 C350,448 356,462 366,470" fill="none" stroke="#fff" strokeOpacity="0.45" strokeWidth="4" strokeLinecap="round" />
+          <g className="vase" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); cycleVaseKind() }}>
+            <VaseWithDecor kind={vaseKind} colorIdx={vaseColorIdx} decor={vaseDecor} />
           </g>
 
           {/* blooms */}
