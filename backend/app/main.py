@@ -1,13 +1,16 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.auth_routes import router as auth_router
 from app.api.gallery_routes import router as gallery_router
 from app.api.routes import router
+from app.auth.store import init_db as init_auth_db
 from app.gallery.store import init_db
 from app.observability.tracing import start_trace
 
 app = FastAPI(title="AI Search Engine")
 init_db()
+init_auth_db()
 
 app.add_middleware(
     CORSMiddleware,
@@ -45,3 +48,4 @@ async def tracing_middleware(request: Request, call_next):
 
 app.include_router(router)
 app.include_router(gallery_router)
+app.include_router(auth_router)

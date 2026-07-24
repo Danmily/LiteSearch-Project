@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react'
 import Studio from './Studio'
 import ComplexRequest from './ComplexRequest'
 import Gallery from './Gallery'
+import AuthPanel from './AuthPanel'
+import { AuthProvider } from './auth'
 import './App.css'
 
 function initialGalleryPostId(): number | null {
@@ -133,8 +135,10 @@ function App() {
       : '找一种花:香气好的 / 适合探病 / 花语关于告别…'
 
   return (
+    <AuthProvider>
     <div className="page">
       <header className="masthead">
+        <div className="auth-widget-slot"><AuthPanel /></div>
         <div className="masthead-rule" />
         <h1>
           <svg viewBox="-34 -38 68 72" width="40" height="42" className="masthead-doodle" aria-hidden="true">
@@ -250,6 +254,7 @@ function App() {
         花艺原则参考 AIFD 十项评估与 60-30-10 法则 · 内容为演示语料
       </footer>
     </div>
+    </AuthProvider>
   )
 }
 

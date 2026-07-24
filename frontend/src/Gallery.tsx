@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import ArrangementView, { type Snapshot } from './ArrangementView'
-import { NICKNAME_KEY } from './Studio'
+import { useAuth, authHeader } from './auth'
 
 const API_BASE = 'http://localhost:8000'
 
@@ -32,8 +32,7 @@ function formatWhen(iso: string): string {
 }
 
 export default function Gallery({ initialPostId }: { initialPostId?: number | null }) {
-  const [nickname, setNickname] = useState(() => localStorage.getItem(NICKNAME_KEY) ?? '')
-  const [nicknameDraft, setNicknameDraft] = useState('')
+  const { user, token } = useAuth()
   const [sort, setSort] = useState<'new' | 'top'>('new')
   const [posts, setPosts] = useState<PostSummary[]>([])
   const [loading, setLoading] = useState(false)
@@ -45,22 +44,13 @@ export default function Gallery({ initialPostId }: { initialPostId?: number | nu
   const [commentDraft, setCommentDraft] = useState('')
   const [commentBusy, setCommentBusy] = useState(false)
 
-  function saveNickname() {
-    const n = nicknameDraft.trim()
-    if (!n) return
-    localStorage.setItem(NICKNAME_KEY, n)
-    setNickname(n)
-    setNicknameDraft('')
-  }
-
   async function loadPosts() {
     setLoading(true)
     setError(null)
     try {
       const url = new URL('/gallery/posts', API_BASE)
       url.searchParams.set('sort', sort)
-      if (nickname) url.searchParams.set('viewer', nickname)
-      const res = await fetch(url)
+      const res = await fetch(url, { headers: authHeader(token) })
       if (!res.ok) throw new Error(`请求失败: ${res.status}`)
       const data = await res.json()
       setPosts(data.posts)
@@ -76,8 +66,7 @@ export default function Gallery({ initialPostId }: { initialPostId?: number | nu
     setError(null)
     try {
       const url = new URL(`/gallery/posts/${id}`, API_BASE)
-      if (nickname) url.searchParams.set('viewer', nickname)
-      const res = await fetch(url)
+      const res = await fetch(url, { headers: authHeader(token) })
       if (!res.ok) throw new Error(`请求失败: ${res.status}`)
       setDetail(await res.json())
     } catch (err) {
@@ -98,14 +87,13 @@ export default function Gallery({ initialPostId }: { initialPostId?: number | nu
   }, [selectedId])
 
   async function toggleLike() {
-    if (!detail || !nickname) return
+    if (!detail || !user) return
     const optimistic = { ...detail, liked_by_me: !detail.liked_by_me, like_count: detail.like_count + (detail.liked_by_me ? -1 : 1) }
     setDetail(optimistic)
     try {
       const res = await fetch(new URL(`/gallery/posts/${detail.id}/like`, API_BASE), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname }),
+        headers: authHeader(token),
       })
       if (!res.ok) throw new Error(`请求失败: ${res.status}`)
       const data = await res.json()
@@ -116,13 +104,13 @@ export default function Gallery({ initialPostId }: { initialPostId?: number | nu
   }
 
   async function submitComment() {
-    if (!detail || !nickname || !commentDraft.trim() || commentBusy) return
+    if (!detail || !user || !commentDraft.trim() || commentBusy) return
     setCommentBusy(true)
     try {
       const res = await fetch(new URL(`/gallery/posts/${detail.id}/comments`, API_BASE), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname, body: commentDraft.trim() }),
+        headers: { 'Content-Type': 'application/json', ...authHeader(token) },
+        body: JSON.stringify({ body: commentDraft.trim() }),
       })
       if (!res.ok) throw new Error(`请求失败: ${res.status}`)
       const comment = await res.json()
@@ -152,22 +140,8 @@ export default function Gallery({ initialPostId }: { initialPostId?: number | nu
     <div className="gallery">
       <p className="studio-hint">在插花工坊搭一瓶花,点「发布到集市」就能出现在这里 · 大家的花束都能点赞、评论</p>
 
-      {!nickname && (
-        <div className="publish-fields nickname-gate">
-          <input
-            type="text"
-            className="publish-input"
-            placeholder="先起个昵称才能点赞/评论"
-            value={nicknameDraft}
-            onChange={(e) => setNicknameDraft(e.target.value)}
-            maxLength={24}
-          />
-          <button type="button" className="ink-btn" onClick={saveNickname} disabled={!nicknameDraft.trim()}>
-            记住昵称
-          </button>
-        </div>
-      )}
-      {nickname && <p className="hint">当前昵称:{nickname}</p>}
+      {!user && <p className="hint">先登录才能点赞/评论 · 用右上角的「登录 / 注册」</p>}
+      {user && <p className="hint">当前昵称:{user.nickname}</p>}
 
       {error && <p className="error">出错了: {error}</p>}
 
@@ -211,8 +185,8 @@ export default function Gallery({ initialPostId }: { initialPostId?: number | nu
                   type="button"
                   className={detail.liked_by_me ? 'ink-btn' : 'ink-btn ghost'}
                   onClick={toggleLike}
-                  disabled={!nickname}
-                  title={nickname ? undefined : '先起个昵称才能点赞'}
+                  disabled={!user}
+                  title={user ? undefined : '先登录才能点赞'}
                 >
                   ♥ {detail.like_count}
                 </button>
@@ -229,7 +203,7 @@ export default function Gallery({ initialPostId }: { initialPostId?: number | nu
                 {detail.comments.length === 0 && <p className="hint">还没有评论,来说第一句吧</p>}
               </ul>
 
-              {nickname ? (
+              {user ? (
                 <div className="publish-fields">
                   <input
                     type="text"
@@ -244,7 +218,7 @@ export default function Gallery({ initialPostId }: { initialPostId?: number | nu
                   </button>
                 </div>
               ) : (
-                <p className="hint">先起个昵称才能评论</p>
+                <p className="hint">先登录才能评论</p>
               )}
             </div>
           )}

@@ -30,8 +30,26 @@ body {
 /* ---- masthead ---- */
 
 .masthead {
+  position: relative;
   text-align: center;
   margin-bottom: 1.6rem;
+}
+
+.auth-widget-slot {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.auth-widget {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.auth-note {
+  text-align: left;
+  min-width: 220px;
 }
 
 .masthead-rule {
@@ -817,8 +835,6 @@ body {
   color: var(--ink);
 }
 .publish-input:focus { outline: none; border-color: var(--moss); }
-
-.nickname-gate { max-width: 420px; margin: 0 auto 1rem; }
 
 /* ---- read-only arrangement renderer (Studio + Gallery share this) ---- */
 

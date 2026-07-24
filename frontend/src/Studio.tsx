@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
+import { useAuth, authHeader } from './auth'
 
 const API_BASE = 'http://localhost:8000'
 export const INK = '#4a4238'
@@ -603,12 +604,12 @@ const CRAYON_KEY = 'huayuji-crayon-v1'
 const VASE_KIND_KEY = 'huayuji-vase-kind-v1'
 const VASE_COLOR_KEY = 'huayuji-vase-color-v1'
 const VASE_DECOR_KEY = 'huayuji-vase-decor-v1'
-export const NICKNAME_KEY = 'huayuji-nickname'
 const MAX_STEMS = 26
 
 let nextId = 1
 
 export default function Studio() {
+  const { user, token } = useAuth()
   const [placed, setPlaced] = useState<Placed[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
@@ -638,7 +639,6 @@ export default function Studio() {
   const [description, setDescription] = useState<{ name: string; blurb: string } | null>(null)
   const [descLoading, setDescLoading] = useState(false)
   const [publishOpen, setPublishOpen] = useState(false)
-  const [nicknameDraft, setNicknameDraft] = useState(() => localStorage.getItem(NICKNAME_KEY) ?? '')
   const [captionDraft, setCaptionDraft] = useState('')
   const [publishing, setPublishing] = useState(false)
   const [publishError, setPublishError] = useState<string | null>(null)
@@ -872,19 +872,18 @@ export default function Studio() {
   }
 
   async function publish() {
-    if (!nicknameDraft.trim() || placed.length === 0 || publishing) return
+    if (!user || placed.length === 0 || publishing) return
     setPublishing(true)
     setPublishError(null)
     try {
       const snapshot = { placed, vaseKind, vaseColorIdx, vaseDecor, themeKey, lightKey, crayon }
       const res = await fetch(new URL('/gallery/posts', API_BASE), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname: nicknameDraft.trim(), caption: captionDraft.trim(), snapshot }),
+        headers: { 'Content-Type': 'application/json', ...authHeader(token) },
+        body: JSON.stringify({ caption: captionDraft.trim(), snapshot }),
       })
       if (!res.ok) throw new Error(`请求失败: ${res.status}`)
       const data = await res.json()
-      localStorage.setItem(NICKNAME_KEY, nicknameDraft.trim())
       setPublishedLink(`${window.location.origin}${window.location.pathname}?post=${data.id}`)
       setCopyOk(false)
     } catch (err) {
@@ -1229,27 +1228,23 @@ export default function Studio() {
           {!publishedLink ? (
             <>
               <div className="note-label">发布到集市</div>
-              <div className="publish-fields">
-                <input
-                  type="text"
-                  className="publish-input"
-                  placeholder="你的昵称"
-                  value={nicknameDraft}
-                  onChange={(e) => setNicknameDraft(e.target.value)}
-                  maxLength={24}
-                />
-                <input
-                  type="text"
-                  className="publish-input"
-                  placeholder="说两句这束花的心意(可不填)"
-                  value={captionDraft}
-                  onChange={(e) => setCaptionDraft(e.target.value)}
-                  maxLength={300}
-                />
-                <button type="button" className="ink-btn" onClick={publish} disabled={!nicknameDraft.trim() || publishing}>
-                  {publishing ? '发布中…' : '确认发布'}
-                </button>
-              </div>
+              {!user ? (
+                <p className="hint">先登录才能发布到集市 · 用右上角的「登录 / 注册」</p>
+              ) : (
+                <div className="publish-fields">
+                  <input
+                    type="text"
+                    className="publish-input"
+                    placeholder="说两句这束花的心意(可不填)"
+                    value={captionDraft}
+                    onChange={(e) => setCaptionDraft(e.target.value)}
+                    maxLength={300}
+                  />
+                  <button type="button" className="ink-btn" onClick={publish} disabled={publishing}>
+                    {publishing ? '发布中…' : '确认发布'}
+                  </button>
+                </div>
+              )}
               {publishError && <p className="error">{publishError}</p>}
             </>
           ) : (
