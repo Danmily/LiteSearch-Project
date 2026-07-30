@@ -6,7 +6,7 @@ from collections.abc import Iterator
 
 from app.agent.badcase import log_badcase
 from app.agent.harness import AgentTurn, run_agent
-from app.models.local_llm import get_generation_model
+from app.models.factory import get_generation_model
 from app.observability.tracing import start_trace, traced_stage
 from app.retrieval.vector_retriever import vector_search
 

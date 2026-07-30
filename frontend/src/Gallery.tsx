@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import ArrangementView, { type Snapshot } from './ArrangementView'
 import { useAuth, authHeader } from './auth'
+import { API_BASE } from './config'
 
-const API_BASE = 'http://localhost:8000'
 
 interface PostSummary {
   id: number

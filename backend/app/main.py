@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -6,15 +8,23 @@ from app.api.gallery_routes import router as gallery_router
 from app.api.routes import router
 from app.auth.store import init_db as init_auth_db
 from app.gallery.store import init_db
+from app.ingestion.pipeline import DEFAULT_INDEX_PATH, build_index
 from app.observability.tracing import start_trace
 
 app = FastAPI(title="AI Search Engine")
 init_db()
 init_auth_db()
 
+if not (DEFAULT_INDEX_PATH / "vectors.faiss").exists():
+    # First boot on a fresh deployment: the corpus is committed but the
+    # built FAISS index is gitignored, so build it once from scratch.
+    build_index(DEFAULT_INDEX_PATH.parent / "corpus")
+
+_extra_origins = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", *_extra_origins],
     allow_methods=["*"],
     allow_headers=["*"],
 )

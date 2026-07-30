@@ -1,0 +1,11 @@
+.venv
+__pycache__
+*.pyc
+.env
+.env.local
+data/index
+data/auth.db
+data/gallery.db
+data/traces.jsonl
+eval/badcases
+app/observability/traces

@@ -4,6 +4,7 @@ import ComplexRequest from './ComplexRequest'
 import Gallery from './Gallery'
 import AuthPanel from './AuthPanel'
 import { AuthProvider } from './auth'
+import { API_BASE } from './config'
 import './App.css'
 
 function initialGalleryPostId(): number | null {
@@ -12,7 +13,6 @@ function initialGalleryPostId(): number | null {
   return Number.isFinite(n) ? n : null
 }
 
-const API_BASE = 'http://localhost:8000'
 
 interface SearchResult {
   doc_id: string

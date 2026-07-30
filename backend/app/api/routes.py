@@ -6,7 +6,7 @@ from fastapi.responses import StreamingResponse
 
 from app.agent.pipeline import run_pipeline
 from app.ingestion.pipeline import DEFAULT_INDEX_PATH, build_index
-from app.models.local_llm import get_generation_model
+from app.models.factory import get_generation_model
 from app.observability.tracing import traced_stage
 from app.retrieval.vector_retriever import _load_index, vector_search
 

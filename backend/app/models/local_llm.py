@@ -1,5 +1,3 @@
-from functools import lru_cache
-
 from mlx_lm import generate, load
 
 from app.models.base import GenerationModel
@@ -19,8 +17,3 @@ class LocalLLM(GenerationModel):
         return generate(
             self._model, self._tokenizer, prompt=formatted, max_tokens=max_tokens
         )
-
-
-@lru_cache(maxsize=1)
-def get_generation_model() -> GenerationModel:
-    return LocalLLM()

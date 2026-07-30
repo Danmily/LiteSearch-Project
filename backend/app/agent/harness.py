@@ -1,7 +1,7 @@
 import re
 from dataclasses import dataclass, field
 
-from app.models.local_llm import get_generation_model
+from app.models.factory import get_generation_model
 from app.observability.tracing import traced_stage
 
 

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { API_BASE } from './config'
 
-const API_BASE = 'http://localhost:8000'
 const TOKEN_KEY = 'huayuji-auth-token'
 
 interface AuthUser {

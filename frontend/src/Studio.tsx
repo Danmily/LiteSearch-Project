@@ -1,7 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
 import { useAuth, authHeader } from './auth'
+import { API_BASE } from './config'
 
-const API_BASE = 'http://localhost:8000'
 export const INK = '#4a4238'
 
 export type Kind =
