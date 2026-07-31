@@ -8,6 +8,14 @@ from app.models.local_embedding import get_embedding_model
 DEFAULT_INDEX_PATH = Path(__file__).resolve().parents[2] / "data" / "index"
 
 
+def _build_keyword_index(records: list[ChunkRecord], index_path: Path) -> None:
+    # Deferred import: keyword_retriever imports DEFAULT_INDEX_PATH from this
+    # module, so importing it at module scope here would be circular.
+    from app.retrieval.keyword_retriever import build_fts_index
+
+    build_fts_index(records, index_path / "fts5.db")
+
+
 def build_index(corpus_dir: Path, index_path: Path = DEFAULT_INDEX_PATH) -> IndexStore:
     embedding_model = get_embedding_model()
 
@@ -36,4 +44,5 @@ def build_index(corpus_dir: Path, index_path: Path = DEFAULT_INDEX_PATH) -> Inde
     store = IndexStore(dim=dim)
     store.add(vectors, all_records)
     store.save(index_path)
+    _build_keyword_index(all_records, index_path)
     return store

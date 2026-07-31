@@ -8,7 +8,9 @@ from app.agent.pipeline import run_pipeline
 from app.ingestion.pipeline import DEFAULT_INDEX_PATH, build_index
 from app.models.factory import get_generation_model
 from app.observability.tracing import traced_stage
-from app.retrieval.vector_retriever import _load_index, vector_search
+from app.retrieval.hybrid import hybrid_search
+from app.retrieval.keyword_retriever import _connect as _connect_fts
+from app.retrieval.vector_retriever import _load_index
 
 router = APIRouter()
 
@@ -37,14 +39,14 @@ def health() -> dict[str, str]:
 
 @router.get("/search")
 def search(q: str, top_k: int = 5) -> dict:
-    results = vector_search(q, top_k=top_k)
+    results = hybrid_search(q, top_k=top_k)
     return {"query": q, "results": results}
 
 
 @router.get("/recommend")
 def recommend(q: str, top_k: int = 5) -> dict:
     # 一次向量召回,按语料子目录拆成花材路与理论路
-    hits = vector_search(q, top_k=top_k + 8)
+    hits = hybrid_search(q, top_k=top_k + 8)
     candidates = [h for h in hits if "/flowers/" in h["source_path"]][:top_k]
     knowledge_hits = [h for h in hits if "/knowledge/" in h["source_path"]][:1]
 
@@ -76,11 +78,11 @@ BLURB_RE = re.compile(r"【介绍】\s*([\s\S]+)")
 
 @router.get("/describe")
 def describe(q: str) -> dict:
-    hits = vector_search(q.replace("x", " "), top_k=12)
+    hits = hybrid_search(q.replace("x", " "), top_k=12)
     flower_hits = [h for h in hits if "/flowers/" in h["source_path"]][:4]
     knowledge_hits = [h for h in hits if "/knowledge/" in h["source_path"]]
     if not knowledge_hits:
-        knowledge_hits = [h for h in vector_search("花束配色 比例 主花", top_k=6)
+        knowledge_hits = [h for h in hybrid_search("花束配色 比例 主花", top_k=6)
                           if "/knowledge/" in h["source_path"]]
     context = "\n\n---\n\n".join(c["text"] for c in flower_hits)
     knowledge = knowledge_hits[0]["text"] if knowledge_hits else "(无)"
@@ -104,4 +106,6 @@ def plan(q: str) -> StreamingResponse:
 def ingest(corpus_dir: str) -> dict:
     store = build_index(Path(corpus_dir), index_path=DEFAULT_INDEX_PATH)
     _load_index.cache_clear()
+    _connect_fts().close()
+    _connect_fts.cache_clear()
     return {"chunks_indexed": len(store), "index_path": str(DEFAULT_INDEX_PATH)}
