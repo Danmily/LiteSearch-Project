@@ -4,7 +4,7 @@ from sentence_transformers import SentenceTransformer
 
 from app.models.base import EmbeddingModel
 
-MODEL_NAME = "BAAI/bge-m3"
+MODEL_NAME = "BAAI/bge-small-zh-v1.5"
 
 
 class LocalEmbeddingModel(EmbeddingModel):

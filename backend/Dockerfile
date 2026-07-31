@@ -11,6 +11,13 @@ RUN uv sync --frozen --no-install-project
 COPY app ./app
 COPY data/corpus ./data/corpus
 
+# Pre-download the embedding model at build time (needs network) so the
+# runtime container never has to — a cold start on a spun-down free-tier
+# host would otherwise pay a slow Hugging Face Hub round-trip on the
+# first live request.
+RUN uv run python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('BAAI/bge-small-zh-v1.5')"
+ENV HF_HUB_OFFLINE=1
+
 # mlx-lm is marked `sys_platform == 'darwin'` in pyproject.toml, so `uv sync`
 # skips it here on Linux — DEEPSEEK_API_KEY must be set at runtime or the
 # generation model has nothing to fall back to.
